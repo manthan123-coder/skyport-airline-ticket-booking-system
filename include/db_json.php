@@ -3,21 +3,38 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-function get_flights_json_file() {
-    $path = __DIR__ . '/../data/flights.json';
-    if (!file_exists($path)) {
-        // Fallback relative path
-        $path = __DIR__ . '/data/flights.json';
+function get_writable_json_path($filename) {
+    $primary_dir = __DIR__ . '/../data';
+    if (!is_dir($primary_dir)) {
+        $primary_dir = __DIR__ . '/data';
     }
-    return $path;
+    $primary_file = $primary_dir . '/' . $filename;
+
+    // If primary file/dir is writable (e.g. local environment), use it directly
+    if (is_writable($primary_file) || (!file_exists($primary_file) && is_writable($primary_dir))) {
+        return $primary_file;
+    }
+
+    // Fallback writable directory for Vercel serverless environment (/tmp/skyport_data)
+    $tmp_dir = sys_get_temp_dir() . '/skyport_data';
+    if (!is_dir($tmp_dir)) {
+        @mkdir($tmp_dir, 0777, true);
+    }
+    $tmp_file = $tmp_dir . '/' . $filename;
+
+    if (!file_exists($tmp_file) && file_exists($primary_file)) {
+        @copy($primary_file, $tmp_file);
+    }
+
+    return file_exists($tmp_file) ? $tmp_file : $primary_file;
+}
+
+function get_flights_json_file() {
+    return get_writable_json_path('flights.json');
 }
 
 function get_bookings_json_file() {
-    $path = __DIR__ . '/../data/bookings.json';
-    if (!file_exists($path)) {
-        $path = __DIR__ . '/data/bookings.json';
-    }
-    return $path;
+    return get_writable_json_path('bookings.json');
 }
 
 function get_all_flights() {
@@ -262,11 +279,7 @@ function update_checkin($pnr, $seat_no, $meal_type = null, $baggage_count = null
 }
 
 function get_news_json_file() {
-    $path = __DIR__ . '/../data/news.json';
-    if (!file_exists($path)) {
-        $path = __DIR__ . '/data/news.json';
-    }
-    return $path;
+    return get_writable_json_path('news.json');
 }
 
 function get_all_news() {
@@ -304,11 +317,7 @@ function get_news_by_id($id) {
 }
 
 function get_notification_config_file() {
-    $path = __DIR__ . '/../data/notification_config.json';
-    if (!file_exists($path)) {
-        $path = __DIR__ . '/data/notification_config.json';
-    }
-    return $path;
+    return get_writable_json_path('notification_config.json');
 }
 
 function get_notification_config() {
@@ -340,11 +349,7 @@ function save_notification_config($config) {
 }
 
 function get_appearance_config_file() {
-    $path = __DIR__ . '/../data/appearance_config.json';
-    if (!file_exists($path)) {
-        $path = __DIR__ . '/data/appearance_config.json';
-    }
-    return $path;
+    return get_writable_json_path('appearance_config.json');
 }
 
 function get_appearance_config() {
