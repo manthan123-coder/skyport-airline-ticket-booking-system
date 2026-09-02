@@ -56,7 +56,7 @@ if ($res && $res->num_rows === 1) {
             // ignore failures
         }
 
-        header("Location: dashboard.php");
+        header("Location: admin/index.php");
         exit;
     } else {
         $_SESSION['error'] = "Invalid email or password.";

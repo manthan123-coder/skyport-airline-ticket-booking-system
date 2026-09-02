@@ -1,389 +1,224 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Payments</title>
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link rel="stylesheet" href="index.css">
-</head>
-<body>
-
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'include/db_json.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && !isset($_POST['pay_now'])) {
-  foreach ($_POST as $key => $value) {
-    $_SESSION[$key] = $value;
-  }
+// Save passenger details to Session
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['pay_now'])) {
+    foreach ($_POST as $key => $value) {
+        $_SESSION[$key] = $value;
+    }
 }
 
-include 'db.php';
-
+// Handle Payment Submission
 if (isset($_POST['pay_now'])) {
-  $_SESSION['booking_id'] = 'BK' . date('YmdHis');
-  $_SESSION['pnr'] = strtoupper(substr(uniqid(), -6));
-
-  $sql = "INSERT INTO bookings
-    (
-        booking_id,
-        pnr,
-        flight_name,
-        from_city,
-        to_city,
-        departure_date,
-        return_date,
-        firstname,
-        lastname,
-        email,
-        phone,
-        amount,
-        payment_status,
-        departure_time,
-        arrival_time
-
-    )
-    VALUES
-    (
-        '{$_SESSION['booking_id']}',
-        '{$_SESSION['pnr']}',
-        '{$_SESSION['flight_name']}',
-        '{$_SESSION['from_city']}',
-        '{$_SESSION['to_city']}',
-        '{$_SESSION['departure_date']}',
-        '{$_SESSION['return_date']}',
-        '{$_SESSION['firstname']}',
-        '{$_SESSION['lastname']}',
-        '{$_SESSION['email']}',
-        '{$_SESSION['number']}',
-        '{$_SESSION['price']}',
-        'Success',
-        '{$_SESSION['departure_time']}',
-        '{$_SESSION['arrival_time']}'
-    )";
-
-  if (mysqli_query($conn, $sql)) {
+    $pnr = 'SKP' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 5));
+    $booking_id = 'BK' . date('YmdHis');
+    
+    $_SESSION['pnr'] = $pnr;
+    $_SESSION['booking_id'] = $booking_id;
     $_SESSION['payment_status'] = 'Success';
+
+    $booking_data = [
+        'booking_id'     => $booking_id,
+        'pnr'            => $pnr,
+        'flight_name'    => $_SESSION['flight_name'] ?? '6E-204',
+        'airline_name'   => $_SESSION['airline_name'] ?? 'IndiGo',
+        'from_city'      => $_SESSION['from_city'] ?? 'Delhi',
+        'to_city'        => $_SESSION['to_city'] ?? 'Mumbai',
+        'departure_date' => $_SESSION['departure_date'] ?? date('Y-m-d'),
+        'return_date'    => $_SESSION['return_date'] ?? '',
+        'trip_type'      => $_SESSION['trip_type'] ?? 'oneway',
+        'passenger_class'=> $_SESSION['passenger_class'] ?? '1 Adult, Economy',
+        'gender'         => $_SESSION['gender'] ?? 'Mr',
+        'firstname'      => $_SESSION['firstname'] ?? 'Guest',
+        'lastname'       => $_SESSION['lastname'] ?? 'Passenger',
+        'email'          => $_SESSION['email'] ?? 'guest@example.com',
+        'phone'          => $_SESSION['number'] ?? '+91 9876543210',
+        'nationality'    => $_SESSION['nationality'] ?? 'Indian',
+        'dob'            => $_SESSION['dob'] ?? '1995-01-01',
+        'meal_type'      => $_SESSION['meal_type'] ?? 'None',
+        'wheelchair'     => $_SESSION['wheelchair'] ?? 'No',
+        'amount'         => $_SESSION['price'] ?? '4500',
+        'payment_method' => $_POST['payment_method'] ?? 'Card',
+        'payment_status' => 'Success',
+        'checkin_status' => 'Not Checked-in',
+        'seat_no'        => 'Unassigned',
+        'departure_time' => $_SESSION['departure_time'] ?? '06:00',
+        'arrival_time'   => $_SESSION['arrival_time'] ?? '08:15',
+        'created_at'     => date('Y-m-d H:i:s')
+    ];
+
+    save_booking($booking_data);
 
     header('Location: confirmation.php');
     exit();
-  }
 }
-$from_city = $_SESSION['from_city'] ?? '';
-$to_city = $_SESSION['to_city'] ?? '';
-$departure_date = $_SESSION['departure_date'] ?? '';
 
-$flight_name = $_POST['flight_name'];
-$price = $_POST['price'];
-$departure_time = $_POST['departure_time'];
-$arrival_time = $_POST['arrival_time'];
+$firstname = $_SESSION['firstname'] ?? 'Passenger';
+$lastname = $_SESSION['lastname'] ?? '';
+$flight_name = $_SESSION['flight_name'] ?? '6E-204';
+$airline_name = $_SESSION['airline_name'] ?? 'IndiGo';
+$from_city = $_SESSION['from_city'] ?? 'Delhi';
+$to_city = $_SESSION['to_city'] ?? 'Mumbai';
+$departure_date = $_SESSION['departure_date'] ?? date('Y-m-d');
+$price = $_SESSION['price'] ?? '4500';
+
+include 'include/header.php';
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                 <span class="logo-circle me-2">✈</span>
-                <span>SkyPort</span>
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                       <li class="nav-item ms-5"><a class="nav-link active" href="index.php">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="flight.php">Flights</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Web Check-in</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">My Bookings</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Contact Us</a></li>
-                </ul>
-
-                <div class="d-flex align-items-center">
-                    <a class="btn btn-outline-primary me-2" href="#"><i class="bi bi-person"></i> Sign up</a>
-                    <a class="btn btn-primary" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                </div>
+<div class="container my-4">
+    <!-- STEPPER BAR -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
+        <div class="row text-center align-items-center">
+            <div class="col-4">
+                <span class="badge bg-success rounded-circle p-2 me-1"><i class="bi bi-check-lg"></i></span>
+                <span class="fw-bold text-success small">1. Selection</span>
+            </div>
+            <div class="col-4 border-start border-end">
+                <span class="badge bg-success rounded-circle p-2 me-1"><i class="bi bi-check-lg"></i></span>
+                <span class="fw-bold text-success small">2. Details</span>
+            </div>
+            <div class="col-4">
+                <span class="badge bg-primary rounded-circle p-2 me-1">3</span>
+                <span class="fw-bold text-primary small">3. Payment</span>
             </div>
         </div>
-    </nav>
-
-
-
-<div class="container payment-wrapper">
-
-<div class="row">
-
-<!-- Booking Summary -->
-
-<div class="col-lg-4 mb-4">
-
-<div class="card summary-card p-4">
-
-<h4>Booking Summary</h4>
-
-<hr>
-<p>
-<strong>Passenger:</strong>
-<?php echo $_SESSION['firstname'] . ' ' . $_SESSION['lastname']; ?>
-</p>
-
-<p>
-<strong>Flight:</strong>
-<?php echo $_SESSION['flight_name']; ?>
-</p>
-
-<p><strong>From:</strong>
-<?php echo $_SESSION['from_city'] ?? 'Not Found'; ?>
-</p>
-
-<p><strong>To:</strong>
-<?php echo $_SESSION['to_city'] ?? 'Not Found'; ?>
-</p>
-
-<p><strong>Departure:</strong>
-<?php echo $_SESSION['departure_date'] ?? 'Not Found'; ?>
-</p>
-
-<p>
-<strong>Amount:</strong>
-₹<?php echo $_SESSION['price']; ?>
-</p>
-
-<hr>
-
-</div>
-
-</div>
-
-<!-- Payment Section -->
-
-<div class="col-lg-8">
-
-<div class="card payment-card p-4">
-
-<h3 class="mb-4">Complete Payment</h3>
-
-<ul class="nav nav-pills mb-4">
-
-<li class="nav-item">
-<button class="nav-link active"
-data-bs-toggle="pill"
-data-bs-target="#cardtab">
-Card
-</button>
-</li>
-
-<li class="nav-item">
-<button class="nav-link"
-data-bs-toggle="pill"
-data-bs-target="#upitab">
-UPI
-</button>
-</li>
-
-<li class="nav-item">
-<button class="nav-link"
-data-bs-toggle="pill"
-data-bs-target="#nettab">
-Net Banking
-</button>
-</li>
-
-</ul>
-
-<div class="tab-content">
-
-<!-- Card -->
-
-<div class="tab-pane fade show active" id="cardtab">
-
-<form action="payment.php" method="POST">
-
-<input type="hidden" name="payment_method" value="Card">
-
-<div class="mb-3">
-<label>Card Holder Name</label>
-<input type="text" class="form-control" required>
-</div>
-
-<div class="mb-3">
-<label>Card Number</label>
-<input type="text" maxlength="19" class="form-control" required>
-</div>
-
-<div class="row">
-
-<div class="col-md-6">
-<label>Expiry Date</label>
-<input type="text" class="form-control" placeholder="MM/YY" required>
-</div>
-
-<div class="col-md-6">
-<label>CVV</label>
-<input type="password" maxlength="3" class="form-control" required>
-</div>
-
-</div>
-
-<button type="submit" name="pay_now"class="btn btn-success w-100 mt-4 pay-btn">
-Pay Now
-</button>
-
-</form>
-
-</div>
-
-<!-- UPI -->
-
-<div class="tab-pane fade" id="upitab">
-
-<form action="payment.php" method="POST">
-
-<input type="hidden" name="payment_method" value="UPI">
-
-<div class="mb-3">
-<label>UPI ID</label>
-<input type="text"
-class="form-control"
-placeholder="example@upi"
-required>
-</div>
-
-<button class="btn btn-success w-100 mt-4 pay-btn">
-Pay via UPI
-</button>
-
-</form>
-
-</div>
-
-<!-- Net Banking -->
-
-<div class="tab-pane fade" id="nettab">
-
-<form action="payment.php" method="POST">
-
-<input type="hidden" name="payment_method" value="Net Banking">
-
-<div class="mb-3">
-<label>Select Bank</label>
-
-<select class="form-select" required>
-<option value="">Choose Bank</option>
-<option>SBI</option>
-<option>HDFC Bank</option>
-<option>ICICI Bank</option>
-<option>Axis Bank</option>
-<option>Kotak Mahindra</option>
-<option>Bank of Baroda</option>
-</select>
-
-</div>
-
-<button class="btn btn-success w-100 mt-4 pay-btn">
-Proceed to Bank
-</button>
-
-</form>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-
-    <footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-
-      <!-- Logo & Subscribe -->
-      <div class="footer-col">
-        <div class="footer-logo">
-        <span class="logo-circle me-2">✈</span>
-          <img src="logo.svg" alt="">
-          <span>Sky Port</span>
-          
-          
-        </div>
-        <p class="footer-text">
-          Lorem ipsum dolor sit amet consectetur. Aliquet vulputate augue penatibus in libero et id aliquam.
-          In ridiculus pretium est velit euismod.
-        </p>
-
-        <h6 class="footer-title">Subscribe to our special offers</h6>
-        <form class="subscribe-box">
-          <input type="email" placeholder="Email address">
-          <button type="submit">Subscribe</button>
-        </form>
-      </div>
-
-      <!-- Booking -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Booking</h5>
-        <ul>
-          <li><a href="#">Book Flights</a></li>
-          <li><a href="#">Travel Services</a></li>
-          <li><a href="#">Transportation</a></li>
-          <li><a href="#">Planning Your Trip</a></li>
-        </ul>
-      </div>
-
-      <!-- Useful Links -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Useful Links</h5>
-        <ul>
-          <li><a href="index.php">Home</a></li>
-          <li><a href="#">Blogs</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Contact Us</a></li>
-        </ul>
-      </div>
-
-      <!-- Manage -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Manage</h5>
-        <ul>
-          <li><a href="#">Check-in</a></li>
-          <li><a href="#">Manage Your Booking</a></li>
-          <li><a href="#">Chauffeur Drive</a></li>
-          <li><a href="#">Flight Status</a></li>
-        </ul>
-      </div>
-
-      <!-- Contact -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Contact Us</h5>
-        <ul class="contact-list">
-          <li>📍 123 Main Street, Anytown, USA.</li>
-          <li>📞 <a href="tel:+1234567890">+1 234 567 890</a></li>
-          <li>✉️ <a href="mailto:email@example.com">email@example.com</a></li>
-        </ul>
-
-        <h6 class="footer-title">Follow Us!</h6>
-        <div class="social-icons">
-          <a href="#">in</a>
-          <a href="#">f</a>
-          <a href="#">ig</a>
-          <a href="#">x</a>
-        </div>
-      </div>
-
     </div>
 
-    <div class="footer-bottom">
-      ©2025 FlyNow All Rights Reserved.
-    </div>
-  </div>
-</footer>
+    <div class="row g-4">
+        <!-- BOOKING SUMMARY SIDEBAR -->
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h6 class="fw-bold mb-3"><i class="bi bi-receipt me-2 text-primary"></i>Booking Summary</h6>
+                
+                <div class="p-3 bg-light rounded-3 mb-3">
+                    <div class="small text-muted mb-1">Passenger</div>
+                    <div class="fw-bold text-dark"><?= htmlspecialchars($firstname . ' ' . $lastname); ?></div>
+                    <div class="small text-muted mt-2">Flight</div>
+                    <div class="fw-bold text-dark"><?= htmlspecialchars($airline_name); ?> (<?= htmlspecialchars($flight_name); ?>)</div>
+                    
+                    <hr class="my-2 opacity-25">
+                    
+                    <div class="d-flex justify-content-between small">
+                        <span class="text-muted">Route:</span>
+                        <span class="fw-semibold"><?= htmlspecialchars($from_city); ?> ✈ <?= htmlspecialchars($to_city); ?></span>
+                    </div>
+                    <div class="d-flex justify-content-between small mt-1">
+                        <span class="text-muted">Date:</span>
+                        <span class="fw-semibold"><?= date('d M Y', strtotime($departure_date)); ?></span>
+                    </div>
+                </div>
 
-</body>
-</html>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span class="text-muted small">Total Fare:</span>
+                    <span class="fs-4 fw-bold text-primary">₹<?= number_format($price); ?></span>
+                </div>
+                <div class="alert alert-success py-2 small mb-0"><i class="bi bi-shield-check me-1"></i> SSL Encrypted & Secure Payment</div>
+            </div>
+        </div>
+
+        <!-- PAYMENT OPTIONS -->
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm rounded-4 p-4">
+                <h5 class="fw-bold mb-3"><i class="bi bi-credit-card-2-front me-2 text-primary"></i>Select Payment Method</h5>
+
+                <ul class="nav nav-pills mb-4 nav-justified bg-light p-1 rounded-3" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active fw-bold py-2" data-bs-toggle="pill" data-bs-target="#cardTab">
+                            <i class="bi bi-credit-card me-1"></i> Card
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#upiTab">
+                            <i class="bi bi-qr-code-scan me-1"></i> UPI
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link fw-bold py-2" data-bs-toggle="pill" data-bs-target="#netTab">
+                            <i class="bi bi-bank me-1"></i> Net Banking
+                        </button>
+                    </li>
+                </ul>
+
+                <div class="tab-content">
+                    <!-- CARD TAB -->
+                    <div class="tab-pane fade show active" id="cardTab">
+                        <form action="payment.php" method="POST">
+                            <input type="hidden" name="payment_method" value="Credit/Debit Card">
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted">Cardholder Name</label>
+                                <input type="text" class="form-control" placeholder="Name on card" required value="<?= htmlspecialchars($firstname . ' ' . $lastname); ?>">
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted">Card Number</label>
+                                <input type="text" maxlength="19" class="form-control" placeholder="4532 •••• •••• 8901" required value="4532 8912 3456 8901">
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted">Expiry Date</label>
+                                    <input type="text" class="form-control" placeholder="MM/YY" required value="12/28">
+                                </div>
+                                <div class="col-6">
+                                    <label class="form-label small fw-semibold text-muted">CVV Code</label>
+                                    <input type="password" maxlength="3" class="form-control" placeholder="123" required value="892">
+                                </div>
+                            </div>
+
+                            <button type="submit" name="pay_now" class="btn btn-success btn-lg w-100 mt-4 rounded-pill fw-bold shadow-sm py-3">
+                                Pay ₹<?= number_format($price); ?> & Confirm Booking <i class="bi bi-check-circle-fill ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- UPI TAB -->
+                    <div class="tab-pane fade" id="upiTab">
+                        <form action="payment.php" method="POST">
+                            <input type="hidden" name="payment_method" value="UPI">
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted">Enter Virtual Payment Address (VPA)</label>
+                                <input type="text" class="form-control" placeholder="mobileNumber@upi / username@okaxis" required>
+                            </div>
+                            <small class="text-muted d-block mb-3">Compatible with Google Pay, PhonePe, Paytm, and BHIM UPI.</small>
+
+                            <button type="submit" name="pay_now" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-sm py-3">
+                                Pay via UPI ₹<?= number_format($price); ?> <i class="bi bi-check-circle-fill ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- NET BANKING TAB -->
+                    <div class="tab-pane fade" id="netTab">
+                        <form action="payment.php" method="POST">
+                            <input type="hidden" name="payment_method" value="Net Banking">
+                            
+                            <div class="mb-3">
+                                <label class="form-label small fw-semibold text-muted">Select Your Bank</label>
+                                <select class="form-select" required>
+                                    <option value="">Choose Bank</option>
+                                    <option value="SBI">State Bank of India (SBI)</option>
+                                    <option value="HDFC">HDFC Bank</option>
+                                    <option value="ICICI">ICICI Bank</option>
+                                    <option value="Axis">Axis Bank</option>
+                                    <option value="Kotak">Kotak Mahindra Bank</option>
+                                </select>
+                            </div>
+
+                            <button type="submit" name="pay_now" class="btn btn-success btn-lg w-100 rounded-pill fw-bold shadow-sm py-3">
+                                Proceed to Bank Portal <i class="bi bi-box-arrow-up-right ms-2"></i>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<?php include 'include/footer.php'; ?>

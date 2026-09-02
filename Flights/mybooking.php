@@ -1,258 +1,131 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-     <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link rel="stylesheet"
-href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
-
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="index.css">
-</head>
-<body>
-    <?php
-
+<?php
+if (session_status() === PHP_SESSION_NONE) {
     session_start();
-    include ('db.php');
+}
+require_once 'include/db_json.php';
+require_once __DIR__ . '/../auth.php';
 
-    $email = $_SESSION['email'];
-
-    $sql = "SELECT * FROM bookings
-        WHERE email='$email'
-        ORDER BY booking_date DESC";
-
-    $result = mysqli_query($conn, $sql);
-
-    $pnr = $_GET['pnr'] ?? '';
-
-    if ($pnr != '') {
-      $sql = "SELECT * FROM bookings
-            WHERE pnr LIKE '%$pnr%'
-            ORDER BY booking_date DESC";
-    } else {
-      $sql = 'SELECT * FROM bookings
-            ORDER BY booking_date DESC';
+// MANDATORY LOGIN CHECK FOR MY BOOKINGS
+if (empty($_SESSION['user_id'])) {
+    $redirect_url = 'mybooking.php';
+    if (!empty($_GET['pnr'])) {
+        $redirect_url .= '?pnr=' . urlencode(trim($_GET['pnr']));
     }
+    $_SESSION['post_login_redirect'] = $redirect_url;
+    $_SESSION['flash_success'] = 'Please log in to your SkyPort account to view your flight bookings.';
+    header('Location: login.php');
+    exit;
+}
 
-    $result = mysqli_query($conn, $sql);
-    ?>
+$search_term = $_GET['pnr'] ?? $_GET['email'] ?? $_SESSION['user_email'] ?? '';
+$bookings = get_user_bookings($search_term);
 
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                 <span class="logo-circle me-2">✈</span>
-                <span>SkyPort</span>
-            </a>
+include 'include/header.php';
+?>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-            <li class="nav-item ms-5"><a class="nav-link active" href="index.php">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="flight.php">Flights</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Web Check-in</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">My Bookings</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Contact Us</a></li>
-                </ul>
-
-                <div class="d-flex align-items-center">
-                    <a class="btn btn-outline-primary me-2" href="#"><i class="bi bi-person"></i> Sign up</a>
-                    <a class="btn btn-primary" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+<div class="container my-4">
+    <div class="card border-0 shadow-sm rounded-4 p-4 mb-4">
+        <h4 class="fw-bold mb-3"><i class="bi bi-ticket-perforated me-2 text-primary"></i>My Flight Bookings</h4>
+        
+        <!-- SEARCH BOX -->
+        <form method="GET" action="mybooking.php" class="row g-2 align-items-center">
+            <div class="col-md-9">
+                <div class="input-group">
+                    <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-muted"></i></span>
+                    <input type="text" name="pnr" class="form-control border-start-0 py-2" placeholder="Search by PNR Number or Passenger Name" value="<?= htmlspecialchars($search_term); ?>">
                 </div>
             </div>
-        </div>
-    </nav>
-    
-<div class="container my-5">
-
-<!-- SEARCH BOX -->
-<div class="search-box mb-4">
-<form method="GET" class="row g-2 mb-4">
-    <div class="col-md-10">
-        <input type="text"
-               class="form-control"
-               name="pnr"
-               placeholder="Enter PNR Number"
-               value="<?= $_GET['pnr'] ?? '' ?>">
-    </div>
-
-    <div class="col-md-2">
-        <button class="btn btn-primary w-100">
-            Search
-        </button>
-    </div>
-</form>
-</div>
-
-<!-- FILTER BUTTONS -->
-<div class="d-flex gap-2 mb-4">
-    <button class="btn btn-primary">All</button>
-    <button class="btn btn-outline-primary">Upcoming</button>
-    <button class="btn btn-outline-primary">Completed</button>
-</div>
-
-<!-- BOOKINGS LIST -->
-<div class="row">
-
-<?php while ($row = mysqli_fetch_assoc($result)) { ?>
-
-<div class="col-md-6 mb-4">
-
-    <div class="booking-card shadow-sm">
-
-        <div class="top">
-            <h5>✈ <?= $row['flight_name']; ?></h5>
-<span class="status <?= strtolower($row['payment_status']); ?>">
-    <?= $row['payment_status']; ?>
-</span>
-        </div>
-
-        <hr>
-
-        <div class="route">
-            <?= $row['from_city']; ?> ➝ <?= $row['to_city']; ?>
-        </div>
-
-        <div class="details">
-            <p><b>PNR:</b> <?= $row['pnr']; ?></p>
-            <p><b>Name:</b> <?= $row['firstname']; ?> <?= $row['lastname']; ?></p>
-            <p><b>Date:</b> <?= $row['departure_date']; ?></p>
-            <p><b>Amount:</b> ₹<?= $row['amount']; ?></p>
-        </div>
-
-
-    <!-- View Ticket -->
-<form action="viewticket.php" method="POST" class="d-inline">
-    <input type="hidden" name="pnr" value="<?= $row['pnr']; ?>">
-    <button type="submit" class="btn btn-primary">
-        View Ticket
-    </button>
-</form>
-<?php if ($row['checkin_status'] == 'Checked-in') { ?>
-
-    <form action="boardingpass.php" method="POST" class="d-inline">
-        <input type="hidden" name="pnr" value="<?= $row['pnr']; ?>">
-        <button type="submit" class="btn btn-info">
-            <i class="fa-solid fa-id-card"></i> Boarding Pass
-        </button>
-    </form>
-
-<?php } else { ?>
-
-    <!-- Web Check-in -->
-     
-<form action="webcheckin.php" method="POST" class="d-inline">
-    <input type="hidden" name="pnr" value="<?= $row['pnr']; ?>">
-
-    <button type="submit" class="btn btn-success">
-      <i class="fa-solid fa-plane-departure"></i> Web Check-in
-    </button>
-</form>
-<?php } ?>
-
-</div>
-
-</div>
-
-<?php } ?>
-
-
-
-</div>
-
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-
-      <!-- Logo & Subscribe -->
-      <div class="footer-col">
-        <div class="footer-logo">
-        <span class="logo-circle me-2">✈</span>
-          <img src="logo.svg" alt="">
-          <span>Sky Port</span>
-          
-          
-        </div>
-        <p class="footer-text">
-          Lorem ipsum dolor sit amet consectetur. Aliquet vulputate augue penatibus in libero et id aliquam.
-          In ridiculus pretium est velit euismod.
-        </p>
-
-        <h6 class="footer-title">Subscribe to our special offers</h6>
-        <form class="subscribe-box">
-          <input type="email" placeholder="Email address">
-          <button type="submit">Subscribe</button>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary w-100 py-2 fw-bold rounded-3">
+                    Search Booking
+                </button>
+            </div>
         </form>
-      </div>
+    </div>
 
-      <!-- Booking -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Booking</h5>
-        <ul>
-          <li><a href="#">Book Flights</a></li>
-          <li><a href="#">Travel Services</a></li>
-          <li><a href="#">Transportation</a></li>
-          <li><a href="#">Planning Your Trip</a></li>
-        </ul>
-      </div>
-
-      <!-- Useful Links -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Useful Links</h5>
-        <ul>
-          <li><a href="index.php">Home</a></li>
-          <li><a href="#">Blogs</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Contact Us</a></li>
-        </ul>
-      </div>
-
-      <!-- Manage -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Manage</h5>
-        <ul>
-          <li><a href="#">Check-in</a></li>
-          <li><a href="#">Manage Your Booking</a></li>
-          <li><a href="#">Chauffeur Drive</a></li>
-          <li><a href="#">Flight Status</a></li>
-        </ul>
-      </div>
-
-      <!-- Contact -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Contact Us</h5>
-        <ul class="contact-list">
-          <li>📍 123 Main Street, Anytown, USA.</li>
-          <li>📞 <a href="tel:+1234567890">+1 234 567 890</a></li>
-          <li>✉️ <a href="mailto:email@example.com">email@example.com</a></li>
-        </ul>
-
-        <h6 class="footer-title">Follow Us!</h6>
-        <div class="social-icons">
-          <a href="#">in</a>
-          <a href="#">f</a>
-          <a href="#">ig</a>
-          <a href="#">x</a>
+    <!-- BOOKINGS LIST -->
+    <?php if (empty($bookings)): ?>
+        <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-4">
+            <div class="fs-1 text-muted mb-3"><i class="bi bi-journal-x"></i></div>
+            <h5 class="fw-bold">No Bookings Found</h5>
+            <p class="text-muted mb-4">We couldn't find any flight bookings matching your search term.</p>
+            <div>
+                <a href="index.php" class="btn btn-primary px-4 rounded-pill">Book a Flight Now</a>
+            </div>
         </div>
-      </div>
+    <?php else: ?>
+        <div class="row g-4">
+            <?php foreach ($bookings as $b): 
+                $is_cancelled = (strcasecmp($b['checkin_status'] ?? '', 'Cancelled') === 0 || strcasecmp($b['payment_status'] ?? '', 'Cancelled') === 0);
+                $status_display = $is_cancelled ? 'Cancelled' : ($b['payment_status'] ?? 'Success');
+                $status_badge_class = $is_cancelled ? 'bg-danger' : 'bg-success';
+            ?>
+                <div class="col-md-6">
+                    <div class="card border-0 shadow-sm rounded-4 p-4 h-100 <?= $is_cancelled ? 'border-danger border-opacity-25 bg-light-subtle' : ''; ?>">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span class="fw-bold text-dark fs-5">✈ <?= htmlspecialchars($b['airline_name'] ?? 'IndiGo'); ?> (<?= htmlspecialchars($b['flight_name']); ?>)</span>
+                            <span class="badge <?= $status_badge_class; ?> small"><?= htmlspecialchars($status_display); ?></span>
+                        </div>
 
-    </div>
+                        <div class="text-primary fw-bold mb-3 fs-6">
+                            <?= htmlspecialchars($b['from_city']); ?> ➔ <?= htmlspecialchars($b['to_city']); ?>
+                        </div>
 
-    <div class="footer-bottom">
-      ©2025 FlyNow All Rights Reserved.
-    </div>
-  </div>
-</footer>
+                        <?php if ($is_cancelled): ?>
+                            <div class="alert alert-danger py-2 px-3 small rounded-3 mb-3 border-danger-subtle">
+                                <i class="bi bi-x-circle-fill me-1"></i> <strong>Booking Cancelled:</strong> This flight booking was cancelled by airline administration.
+                            </div>
+                        <?php endif; ?>
 
-</body>
-</html>
+                        <div class="row g-2 small text-muted mb-3">
+                            <div class="col-6"><strong>PNR:</strong> <span class="text-dark fw-bold"><?= htmlspecialchars($b['pnr']); ?></span></div>
+                            <div class="col-6"><strong>Name:</strong> <?= htmlspecialchars(($b['firstname'] ?? '') . ' ' . ($b['lastname'] ?? '')); ?></div>
+                            <div class="col-6"><strong>Date:</strong> <?= date('d M Y', strtotime($b['departure_date'] ?? date('Y-m-d'))); ?></div>
+                            <div class="col-6"><strong>Amount:</strong> ₹<?= number_format(floatval($b['amount'] ?? 0)); ?></div>
+                            <div class="col-12"><strong>Check-in Status:</strong> 
+                                <?php if ($is_cancelled): ?>
+                                    <span class="badge bg-danger">Cancelled</span>
+                                <?php elseif (($b['checkin_status'] ?? '') === 'Checked-in'): ?>
+                                    <span class="badge bg-info text-dark">Checked-in (Seat: <?= htmlspecialchars($b['seat_no'] ?? 'N/A'); ?>)</span>
+                                <?php else: ?>
+                                    <span class="badge bg-secondary">Not Checked-in</span>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+
+                        <div class="d-flex flex-wrap gap-2 mt-auto pt-3 border-top">
+                            <form action="viewticket.php" method="POST" class="d-inline">
+                                <input type="hidden" name="pnr" value="<?= htmlspecialchars($b['pnr']); ?>">
+                                <button type="submit" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                    <i class="bi bi-printer me-1"></i> View Ticket
+                                </button>
+                            </form>
+
+                            <?php if ($is_cancelled): ?>
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2 rounded-pill fw-bold align-self-center ms-auto">
+                                    <i class="bi bi-slash-circle me-1"></i> Flight Cancelled
+                                </span>
+                            <?php elseif (($b['checkin_status'] ?? '') === 'Checked-in'): ?>
+                                <form action="boardingpass.php" method="POST" class="d-inline">
+                                    <input type="hidden" name="pnr" value="<?= htmlspecialchars($b['pnr']); ?>">
+                                    <button type="submit" class="btn btn-info btn-sm text-dark fw-bold rounded-pill px-3">
+                                        <i class="bi bi-card-heading me-1"></i> Boarding Pass
+                                    </button>
+                                </form>
+                            <?php else: ?>
+                                <form action="webcheckin.php" method="POST" class="d-inline">
+                                    <input type="hidden" name="pnr" value="<?= htmlspecialchars($b['pnr']); ?>">
+                                    <button type="submit" class="btn btn-success btn-sm rounded-pill px-3">
+                                        <i class="bi bi-qr-code me-1"></i> Web Check-In
+                                    </button>
+                                </form>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+            <?php endforeach; ?>
+        </div>
+    <?php endif; ?>
+</div>
+
+<?php include 'include/footer.php'; ?>

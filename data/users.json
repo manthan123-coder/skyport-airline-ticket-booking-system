@@ -1,0 +1,33 @@
+[
+    {
+        "id": "admin_01",
+        "name": "Manthan Gondaliya",
+        "email": "manthangondaliya56@gmail.com",
+        "password": "$2y$10$DW3vPXWLnJc8n40j5T29Nee.9tXrrIGXmY3DHVOVMUpaWTw0SVlP6",
+        "role": "Admin",
+        "created_at": "2026-08-05T18:06:30+02:00"
+    },
+    {
+        "id": "staff_02",
+        "name": "Rahul Sharma",
+        "email": "rahul@skyport.com",
+        "password": "$2y$10$3zG8uD/.R4k0y1/wM6lqCe7k9oVf8Lh1l1H.zO1z4zO7z4zO7z4zO",
+        "role": "Staff",
+        "created_at": "2026-08-15T12:00:00+02:00"
+    },
+    {
+        "id": "usr_6a93072d6f16e",
+        "name": "saurabh",
+        "email": "saurabh12@gmail.com",
+        "password": "$2y$10$2YKbABAO86bF1G2NKHIDQeK2Y5ojqt9IisGYqF7104QRwRS3vaxgu",
+        "role": "Staff",
+        "created_at": "2026-08-29 18:22:05"
+    },
+    {
+        "id": "dfc30d387cf2947e",
+        "name": "hardik",
+        "email": "hardik123@gmail.com",
+        "password": "$2y$10$gizwtwb6GFYRKEldZ1rxE.QBlDBJzmaN/MHyZkdTLAcmN1JXF57oi",
+        "created_at": "2026-08-29T18:30:51+02:00"
+    }
+]

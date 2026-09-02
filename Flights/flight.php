@@ -1,320 +1,261 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Available Flights</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
-    
-</head>
-<body>
 <?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'include/db_json.php';
+include 'include/header.php';
 
-session_start();
-include 'db.php';
+// Capture parameters from GET or POST
+$from_city = $_REQUEST['from_city'] ?? $_SESSION['from_city'] ?? '';
+$to_city = $_REQUEST['to_city'] ?? $_SESSION['to_city'] ?? '';
+$departure_date = $_REQUEST['departure_date'] ?? $_SESSION['departure_date'] ?? date('Y-m-d');
+$return_date = $_REQUEST['return_date'] ?? $_SESSION['return_date'] ?? '';
+$trip_type = $_REQUEST['trip_type'] ?? $_SESSION['trip_type'] ?? 'oneway';
+$passenger_class = $_REQUEST['passenger_class'] ?? $_SESSION['passenger_class'] ?? '1 Adult, Economy';
+$filter_airline = $_REQUEST['airline'] ?? '';
+$max_price = $_REQUEST['max_price'] ?? 0;
 
-// Search Data
-$from_city = $_POST['from_city'] ?? '';
-$to_city = $_POST['to_city'] ?? '';
-$departure_date = $_POST['departure_date'] ?? '';
-
-// Session me save
+// Save to Session
 $_SESSION['from_city'] = $from_city;
 $_SESSION['to_city'] = $to_city;
 $_SESSION['departure_date'] = $departure_date;
+$_SESSION['return_date'] = $return_date;
+$_SESSION['trip_type'] = $trip_type;
+$_SESSION['passenger_class'] = $passenger_class;
 
-// Flight Search
-$sql = "SELECT * FROM flights
-WHERE departure_city='$from_city'
-AND arrival_city='$to_city'
-ORDER BY departure_time ASC";
+// Calculate Passenger Count & Cabin Class Multipliers
+preg_match('/(\d+)\s*Adult/i', $passenger_class, $mAdult);
+$adults_count = isset($mAdult[1]) ? max(1, intval($mAdult[1])) : 1;
 
-$result = mysqli_query($conn, $sql);
+preg_match('/(\d+)\s*Child/i', $passenger_class, $mChild);
+$children_count = isset($mChild[1]) ? intval($mChild[1]) : 0;
 
-// ============dynamic
+$total_passenger_count = $adults_count + $children_count;
 
+$class_multiplier = 1.0;
+if (stripos($passenger_class, 'Business') !== false) {
+    $class_multiplier = 1.5;
+} elseif (stripos($passenger_class, 'First Class') !== false) {
+    $class_multiplier = 2.0;
+}
+
+$total_fare_multiplier = ($adults_count + ($children_count * 0.75)) * $class_multiplier;
+
+$_SESSION['adults_count'] = $adults_count;
+$_SESSION['children_count'] = $children_count;
+$_SESSION['total_passengers'] = $total_passenger_count;
+$_SESSION['total_fare_multiplier'] = $total_fare_multiplier;
+
+// Search Flights from JSON
+
+
+$flights = search_flights($from_city, $to_city, $departure_date, $return_date, $trip_type, $filter_airline, $max_price);
+// Load reverse-route flights for the return leg of a round trip.
+$return_flights = [];
+if ($trip_type === 'roundtrip' && !empty($return_date) && !empty($from_city) && !empty($to_city)) {
+    $return_flights = search_flights(
+        $to_city,
+        $from_city,
+        $return_date,
+        '',
+        'oneway',
+        $filter_airline,
+        $max_price
+    );
+}
+// If search returned empty because cities weren't selected, show all available flights as recommendations
+$showing_all = false;
+if (empty($flights) && empty($from_city) && empty($to_city)) {
+    $flights = get_all_flights();
+    $showing_all = true;
+}
 
 ?>
 
-
-   <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                <span class="logo-circle me-2">✈</span>
-                <span>SkyPort</span>
+<div class="container my-4">
+    <!-- SEARCH SUMMARY BAR -->
+    <div class="card border-0 shadow-sm rounded-4 p-3 mb-4 bg-light">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+            <div>
+                <h5 class="fw-bold mb-1">
+                    <?php if ($showing_all): ?>
+                        <i class="bi bi-plane me-2 text-primary"></i>All Available Flights
+                    <?php else: ?>
+                        <i class="bi bi-geo-alt-fill me-1 text-primary"></i><?= htmlspecialchars($from_city ?: 'Origin'); ?> 
+                        <i class="bi bi-arrow-right mx-2 text-muted"></i> 
+                        <?= htmlspecialchars($to_city ?: 'Destination'); ?>
+                    <?php endif; ?>
+                </h5>
+                <small class="text-muted">
+                    Date: <strong><?= date('d M Y', strtotime($departure_date)); ?></strong> 
+                    <?php if ($trip_type === 'roundtrip' && !empty($return_date)): ?>
+                        | Return: <strong><?= date('d M Y', strtotime($return_date)); ?></strong>
+                    <?php endif; ?>
+                    | Passengers: <strong><?= htmlspecialchars($passenger_class); ?></strong>
+                </small>
+            </div>
+            <a href="index.php#search" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                <i class="bi bi-pencil-square me-1"></i> Modify Search
             </a>
+        </div>
+    </div>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+    <div class="row g-4">
+        <!-- FILTER SIDEBAR -->
+        <div class="col-lg-3">
+            <div class="card border-0 shadow-sm rounded-4 p-3">
+                <h6 class="fw-bold mb-3"><i class="bi bi-funnel me-2 text-primary"></i>Filter Flights</h6>
+                <form method="GET" action="flight.php">
+                    <input type="hidden" name="from_city" value="<?= htmlspecialchars($from_city); ?>">
+                    <input type="hidden" name="to_city" value="<?= htmlspecialchars($to_city); ?>">
+                    <input type="hidden" name="departure_date" value="<?= htmlspecialchars($departure_date); ?>">
+                    <input type="hidden" name="return_date" value="<?= htmlspecialchars($return_date); ?>">
+                    <input type="hidden" name="trip_type" value="<?= htmlspecialchars($trip_type); ?>">
 
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                      <li class="nav-item ms-5"><a class="nav-link active" href="index.php">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="flight.php">Flights</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Web Check-in</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">My Bookings</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Contact Us</a></li>
-                </ul>
+                    <!-- Airline Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Airline</label>
+                        <select name="airline" class="form-select form-select-sm" onchange="this.form.submit()">
+                            <option value="">All Airlines</option>
+                            <option value="IndiGo" <?= $filter_airline === 'IndiGo' ? 'selected' : ''; ?>>IndiGo</option>
+                            <option value="Air India" <?= $filter_airline === 'Air India' ? 'selected' : ''; ?>>Air India</option>
+                            <option value="SpiceJet" <?= $filter_airline === 'SpiceJet' ? 'selected' : ''; ?>>SpiceJet</option>
+                            <option value="Akasa Air" <?= $filter_airline === 'Akasa Air' ? 'selected' : ''; ?>>Akasa Air</option>
+                            <option value="Air India Express" <?= $filter_airline === 'Air India Express' ? 'selected' : ''; ?>>Air India Express</option>
+                        </select>
+                    </div>
 
-                <div class="d-flex align-items-center">
-                    <a class="btn btn-outline-primary me-2" href="#"><i class="bi bi-person"></i> Sign up</a>
-                    <a class="btn btn-primary" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                    <!-- Max Price Filter -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold text-muted">Max Price: ₹<?= $max_price > 0 ? number_format($max_price) : '10,000+'; ?></label>
+                        <input type="range" name="max_price" class="form-range" min="2000" max="10000" step="500" value="<?= $max_price > 0 ? $max_price : 10000; ?>" onchange="this.form.submit()">
+                    </div>
+
+                    <a href="flight.php" class="btn btn-sm btn-link text-decoration-none p-0 text-muted">Reset Filters</a>
+                </form>
+            </div>
+        </div>
+
+        <!-- FLIGHT LISTING -->
+        <div class="col-lg-9">
+            <?php if (empty($flights)): ?>
+                <div class="card border-0 shadow-sm rounded-4 p-5 text-center my-3">
+                    <div class="fs-1 text-muted mb-3"><i class="bi bi-airplane text-warning"></i></div>
+                    <h5 class="fw-bold">No Direct Flights Found</h5>
+                    <p class="text-muted mb-4">We couldn't find flights matching your exact cities. Try searching for different cities or dates.</p>
+                    <div>
+                        <a href="index.php" class="btn btn-primary px-4 rounded-pill">Search Other Routes</a>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </nav>
-
-  <!-- Flight Card 1 - Indi Go -->
-
-  <!-- <h2 align="center">Flights</h2> -->
-<?php
-if(mysqli_num_rows($result) > 0)
-{
-    while($flight = mysqli_fetch_assoc($result))
-    {
-        $collapseId = "flightDetail".$flight['id'];
-?>
-  <div class="container">
-    <div class="flight-card">
-      <div class="row align-items-center">
-      <div class="col-12 col-md-3 d-flex align-items-center gap-3">
-
-<?php
-$logos = [
-    "IndiGo"    => "logo\indigo.png",
-    "Air India" => "logo\airindia.webp",
-    "SpiceJet"  => "logo\Spicejet.png",
-    "Akasa Air" => "logo\akasa.webp",
-    "AirAsia"   => "airasia.png",
-    "Air India Express" => "logo\airindiaexpress.png"
-];
-
-$logo = $logos[$flight['airline_name']] ?? "default.png";
-?>
-
-<div class="airline-logo-1">
-    <img src="<?= $logo ?>" alt="<?= $flight['airline_name']; ?>">
-</div>
-<div>
-
-                <div class="airline-name"><?= $flight['airline_name']; ?></div>
-                <div class="sub-text"><?= $flight['aircraft']; ?></div>
-            </div>
-          </div>
-          
-          <div class="col-6 col-6 col-md-2 text-center">
-           <div class="time">
-<?= date('H:i', strtotime($flight['departure_time'])); ?>
-</div>
-      <div class="airport"><?= $flight['departure_city']; ?></div>
-          </div>
-          <div class="col-12 col-md-3 text-center">
-      <div class="sub-text mb-1"><?= $flight['duration']; ?></div>
-            <div class="route-line"></div>
-      <div class="sub-text mt-1"><?= $flight['stops']; ?></div>
-          </div>
-          <div class="col-6 col-md-2 text-center">
-         <div class="time">
-<?= date('H:i', strtotime($flight['arrival_time'])); ?>
-</div>
-            <div class="airport"><?= $flight['arrival_city']; ?></div>
-          </div>
-          <div class="col-6 col-md-2 text-end">
-          <div class="price">
-₹<?= number_format($flight['price']); ?>
-</div>
-            <div class="sub-text mb-2">Price</div>
-<form action="detail.php" method="POST">
-    <input type="hidden" name="flight_name" value="<?= $flight['flight_name']; ?>">
-    <input type="hidden" name="price" value="<?= $flight['price']; ?>">
-    <input type="hidden" name="departure_time" value="<?= $flight['departure_time']; ?>">
-    <input type="hidden" name="arrival_time" value="<?= $flight['arrival_time']; ?>">
-
-    <button type="submit" class="btn btn-primary btn-book">
-        Book Now
-    </button>
-</form>
-          </div>
-      </div>
-      <div class="divider"></div>
-      <div class="d-flex justify-content-between align-items-center">
-     <?= date("d F, Y", strtotime($_SESSION['departure_date'])); ?>
-
-<a class="flight-detail-toggle"
-   data-bs-toggle="collapse"
-   data-bs-target="#<?= $collapseId ?>"
-   role="button">
-   Flight Detail ▼
-</a>
-</div>
-</div>
-
-<!-- THIS IS REQUIRED -->
-<div id="<?= $collapseId ?>" class="collapse mt-3">
-
-    <div class="flight-ticket-card">
-
-        <!-- YOUR EXISTING CONTENT -->
-
-        <div class="left-box">
-           <?= date("d F, Y", strtotime($flight['flight_date'])); ?>
-
-            <div class="timeline">
-
-<p>
-<span><?= date("l, d F", strtotime($_SESSION['departure_date'])); ?></span>
--
-<?= date("H:i", strtotime($flight['departure_time'])); ?>
-</p>
-
-<small><?= $flight['duration']; ?></small>
-
-<p>
-<?= date("l, M d", strtotime($flight['flight_date'])); ?>
--
-<?= date("H:i", strtotime($flight['arrival_time'])); ?>
-</p>
-
-</div>
-        </div>
-
-        <div class="right-box">
-            <div class="airline-header">
-
-                <div class="logo-1">  <h6 align="center" style="margin: 0; font-size: 10px; font-weight: bold; color: white; line-height: 1;"></h6></div>
-
-                <div class="info">
-                    <h3>Operated by <?= $flight['airline_name']; ?></h3>
-                    Economy |
-                    Flight <?= $flight['flight_name']; ?> |
-                    Aircraft <?= $flight['aircraft']; ?>    
-                    <p>Adult(s): 25KG luggage free</p>
+            <?php else: ?>
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="text-muted small">Showing <strong><?= count($flights); ?></strong> flights</span>
                 </div>
 
+                <?php foreach ($flights as $index => $flight): 
+                    $collapseId = "flightDetail_" . $flight['id'];
+                    $logo = !empty($flight['logo']) ? $flight['logo'] : '../logo/indigo.png';
+                    $returnFlight = !empty($return_flights) ? $return_flights[$index % count($return_flights)] : null;
+                    $baseSinglePrice = $flight['price'] + ($returnFlight['price'] ?? 0);
+                    $totalPrice = round($baseSinglePrice * $total_fare_multiplier);
+                ?>
+                    <div class="card border-0 shadow-sm rounded-4 mb-3 overflow-hidden">
+                        <div class="card-body p-4">
+                           ```php
+<div class="row g-3 align-items-stretch">
+    <div class="col-lg-9">
+        <!-- Departure leg -->
+        <div class="mb-3">
+            <div class="small fw-bold text-primary text-uppercase mb-2">
+                <i class="bi bi-airplane-engines me-1"></i>
+                Departure &middot; <?= date('d M', strtotime($departure_date)); ?>
+            </div>
+            <div class="row align-items-center g-2">
+                <div class="col-md-3 d-flex align-items-center gap-2">
+                    <img src="<?= htmlspecialchars($logo); ?>" alt="<?= htmlspecialchars($flight['airline_name']); ?>" style="width:42px;height:42px;object-fit:contain" onerror="this.src='logo/indigo.png'">
+                    <div><div class="fw-bold small"><?= htmlspecialchars($flight['airline_name']); ?></div><div class="small text-muted"><?= htmlspecialchars($flight['flight_name']); ?></div></div>
+                </div>
+                <div class="col-4 col-md-2 text-center"><div class="fs-5 fw-bold"><?= date('H:i', strtotime($flight['departure_time'])); ?></div><div class="small text-muted"><?= htmlspecialchars($flight['departure_city']); ?></div></div>
+                <div class="col-4 col-md-3 text-center"><div class="small text-muted"><?= htmlspecialchars($flight['duration']); ?></div><div class="position-relative d-flex align-items-center justify-content-center"><div class="w-100 bg-secondary opacity-25" style="height:2px"></div><i class="bi bi-airplane-fill position-absolute text-primary bg-white px-2"></i></div><div class="small text-success fw-semibold"><?= htmlspecialchars($flight['stops']); ?></div></div>
+                <div class="col-4 col-md-2 text-center"><div class="fs-5 fw-bold"><?= date('H:i', strtotime($flight['arrival_time'])); ?></div><div class="small text-muted"><?= htmlspecialchars($flight['arrival_city']); ?></div></div>
             </div>
         </div>
 
+        <!-- Return leg -->
+        <?php if ($returnFlight): ?>
+            <div class="border-top pt-3">
+                <div class="small fw-bold text-primary text-uppercase mb-2">
+                    <i class="bi bi-airplane-engines-fill me-1"></i>
+                    Return &middot; <?= date('d M', strtotime($return_date)); ?>
+                </div>
+                <div class="row align-items-center g-2">
+                    <div class="col-md-3 d-flex align-items-center gap-2">
+                        <img src="<?= htmlspecialchars($returnFlight['logo'] ?? $logo); ?>" alt="<?= htmlspecialchars($returnFlight['airline_name']); ?>" style="width:42px;height:42px;object-fit:contain" onerror="this.src='logo/indigo.png'">
+                        <div><div class="fw-bold small"><?= htmlspecialchars($returnFlight['airline_name']); ?></div><div class="small text-muted"><?= htmlspecialchars($returnFlight['flight_name']); ?></div></div>
+                    </div>
+                    <div class="col-4 col-md-2 text-center"><div class="fs-5 fw-bold"><?= date('H:i', strtotime($returnFlight['departure_time'])); ?></div><div class="small text-muted"><?= htmlspecialchars($returnFlight['departure_city']); ?></div></div>
+                    <div class="col-4 col-md-3 text-center"><div class="small text-muted"><?= htmlspecialchars($returnFlight['duration']); ?></div><div class="position-relative d-flex align-items-center justify-content-center"><div class="w-100 bg-secondary opacity-25" style="height:2px"></div><i class="bi bi-airplane-fill position-absolute text-primary bg-white px-2"></i></div><div class="small text-success fw-semibold"><?= htmlspecialchars($returnFlight['stops']); ?></div></div>
+                    <div class="col-4 col-md-2 text-center"><div class="fs-5 fw-bold"><?= date('H:i', strtotime($returnFlight['arrival_time'])); ?></div><div class="small text-muted"><?= htmlspecialchars($returnFlight['arrival_city']); ?></div></div>
+                </div>
+            </div>
+        <?php elseif ($trip_type === 'roundtrip'): ?>
+            <div class="border-top pt-3 small text-warning"><i class="bi bi-exclamation-circle me-1"></i>Return flight is not available for this route.</div>
+        <?php endif; ?>
     </div>
 
-</div>
-
-
-
-</div>
-    </div>
-
-<?php
-    }
-}
-else
-{
-?>
-<div class="alert alert-warning text-center mt-5">
-    <h5>No Flights Available</h5>
-</div>
-<?php
-}
-?>
-
-  <!-- ============ -->
-
-  
-  
-
- 
-
-</div>
-    </div>
-
-
-  
-<footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-
-      <!-- Logo & Subscribe -->
-      <div class="footer-col">
-        <div class="footer-logo">
-        <span class="logo-circle me-2">✈</span>
-          <img src="logo.svg" alt="">
-          <span>Sky Port</span>
-          
-          
-        </div>
-        <p class="footer-text">
-          Lorem ipsum dolor sit amet consectetur. Aliquet vulputate augue penatibus in libero et id aliquam.
-          In ridiculus pretium est velit euismod.
-        </p>
-
-        <h6 class="footer-title">Subscribe to our special offers</h6>
-        <form class="subscribe-box">
-          <input type="email" placeholder="Email address">
-          <button type="submit">Subscribe</button>
+    <div class="col-lg-3 text-lg-end text-center border-start">
+        <div class="fs-4 fw-bold text-primary">₹<?= number_format($totalPrice); ?></div>
+        <div class="small text-muted mb-2"><?= $returnFlight ? 'round trip per passenger' : 'per passenger'; ?></div>
+        <form action="detail.php" method="POST">
+            <input type="hidden" name="flight_id" value="<?= $flight['id']; ?>">
+            <input type="hidden" name="flight_name" value="<?= htmlspecialchars($flight['flight_name']); ?>">
+            <input type="hidden" name="airline_name" value="<?= htmlspecialchars($flight['airline_name']); ?>">
+            <input type="hidden" name="price" value="<?= $totalPrice; ?>">
+            <input type="hidden" name="departure_time" value="<?= htmlspecialchars($flight['departure_time']); ?>">
+            <input type="hidden" name="arrival_time" value="<?= htmlspecialchars($flight['arrival_time']); ?>">
+            <input type="hidden" name="from_city" value="<?= htmlspecialchars($flight['departure_city']); ?>">
+            <input type="hidden" name="to_city" value="<?= htmlspecialchars($flight['arrival_city']); ?>">
+            <input type="hidden" name="duration" value="<?= htmlspecialchars($flight['duration']); ?>">
+            <?php if ($returnFlight): ?><input type="hidden" name="return_flight_id" value="<?= $returnFlight['id']; ?>"><?php endif; ?>
+            <button type="submit" class="btn btn-primary btn-sm px-3 rounded-pill fw-bold w-100">Book Now</button>
         </form>
-      </div>
+    </div>
+</div>
 
-      <!-- Booking -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Booking</h5>
-        <ul>
-          <li><a href="#">Book Flights</a></li>
-          <li><a href="#">Travel Services</a></li>
-          <li><a href="#">Transportation</a></li>
-          <li><a href="#">Planning Your Trip</a></li>
-        </ul>
-      </div>
+                            <hr class="my-3 opacity-25">
 
-      <!-- Useful Links -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Useful Links</h5>
-        <ul>
-          <li><a href="index.php">Home</a></li>
-          <li><a href="#">Blogs</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Contact Us</a></li>
-        </ul>
-      </div>
+                            <!-- Accordion Toggle -->
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted"><i class="bi bi-calendar-event me-1"></i> <?= date('d M Y', strtotime($departure_date)); ?></small>
+                                <a class="small text-decoration-none fw-semibold" data-bs-toggle="collapse" href="#<?= $collapseId; ?>" role="button">
+                                    Flight Details <i class="bi bi-chevron-down ms-1"></i>
+                                </a>
+                            </div>
 
-      <!-- Manage -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Manage</h5>
-        <ul>
-          <li><a href="#">Check-in</a></li>
-          <li><a href="#">Manage Your Booking</a></li>
-          <li><a href="#">Chauffeur Drive</a></li>
-          <li><a href="#">Flight Status</a></li>
-        </ul>
-      </div>
+                            <!-- Collapse Details -->
+                            <div class="collapse mt-3" id="<?= $collapseId; ?>">
+                                <div class="p-3 bg-light rounded-3 border">
+                                    <div class="row g-2 small">
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Airline:</strong> <?= htmlspecialchars($flight['airline_name']); ?> (<?= htmlspecialchars($flight['flight_name']); ?>)</p>
+                                            <p class="mb-1"><strong>Aircraft:</strong> <?= htmlspecialchars($flight['aircraft']); ?></p>
+                                            <p class="mb-0"><strong>Seats Available:</strong> <?= htmlspecialchars($flight['seats_available']); ?> seats</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Cabin Baggage:</strong> 7 KG Included</p>
+                                            <p class="mb-1"><strong>Check-in Baggage:</strong> 15 KG Included</p>
+                                            <p class="mb-0"><strong>Cancellation:</strong> Refundable per airline policy</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-      <!-- Contact -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Contact Us</h5>
-        <ul class="contact-list">
-          <li>📍 123 Main Street, Anytown, USA.</li>
-          <li>📞 <a href="tel:+1234567890">+1 234 567 890</a></li>
-          <li>✉️ <a href="mailto:email@example.com">email@example.com</a></li>
-        </ul>
-
-        <h6 class="footer-title">Follow Us!</h6>
-        <div class="social-icons">
-          <a href="#">in</a>
-          <a href="#">f</a>
-          <a href="#">ig</a>
-          <a href="#">x</a>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
         </div>
-      </div>
-
     </div>
+</div>
 
-    <div class="footer-bottom">
-      ©2025 FlyNow All Rights Reserved.
-    </div>
-  </div>
-  
-</footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+<?php include 'include/footer.php'; ?>

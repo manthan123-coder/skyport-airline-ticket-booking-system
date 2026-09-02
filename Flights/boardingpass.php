@@ -1,382 +1,164 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
-    <title>Document</title>
-</head>
-<body>
- <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                 <span class="logo-circle me-2">✈</span>
-                <span>SkyPort</span>
-            </a>
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'include/db_json.php';
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+$pnr = $_REQUEST['pnr'] ?? $_SESSION['pnr'] ?? '';
+$seat = $_REQUEST['seat_number'] ?? '12A';
 
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-            <li class="nav-item ms-5"><a class="nav-link active" href="index.php">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="flight.php">Flights</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Web Check-in</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">My Bookings</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Contact Us</a></li>
-                </ul>
+if (empty($pnr)) {
+    die('<div class="container my-5 alert alert-danger text-center"><h5>Invalid Request</h5><p>No PNR specified.</p><a href="mybooking.php" class="btn btn-primary btn-sm">My Bookings</a></div>');
+}
 
-                <div class="d-flex align-items-center">
-                    <a class="btn btn-outline-primary me-2" href="#"><i class="bi bi-person"></i> Sign up</a>
-                    <a class="btn btn-primary" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+// Perform Check-in update
+if (!empty($seat)) {
+    update_checkin($pnr, $seat);
+}
+
+$booking = get_booking_by_pnr($pnr);
+if (!$booking) {
+    die('<div class="container my-5 alert alert-danger text-center"><h5>Booking Not Found</h5><p>No booking matches PNR: ' . htmlspecialchars($pnr) . '</p><a href="mybooking.php" class="btn btn-primary btn-sm">My Bookings</a></div>');
+}
+
+$qrData = "SkyPort Airlines Boarding Pass\n"
+    . "Passenger: " . ($booking['firstname'] ?? '') . " " . ($booking['lastname'] ?? '') . "\n"
+    . "PNR: " . $booking['pnr'] . "\n"
+    . "Flight: " . ($booking['flight_name'] ?? '') . "\n"
+    . "Seat: " . ($booking['seat_no'] ?? '12A') . "\n"
+    . "Gate: A12\n"
+    . "Status: Checked-in";
+
+include 'include/header.php';
+?>
+
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <div class="alert alert-success text-center mb-4 rounded-3 shadow-sm">
+                <i class="bi bi-check-circle-fill me-2 fs-5"></i>
+                <strong>Check-In Successful!</strong> Your boarding pass has been issued.
+            </div>
+
+            <!-- BOARDING PASS CARD -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden" id="printableBoardingPass">
+                <!-- TOP HEADER -->
+                <div class="bg-dark text-white p-4 d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-2 text-primary">✈</span>
+                            <h3 class="fw-bold mb-0 text-white">SkyPort Airlines</h3>
+                        </div>
+                        <small class="text-white-50">BOARDING PASS</small>
+                    </div>
+                    <div class="text-end">
+                        <div class="fs-4 fw-bold text-warning"><?= htmlspecialchars($booking['flight_name']); ?></div>
+                        <div class="small opacity-75">PNR: <strong><?= htmlspecialchars($booking['pnr']); ?></strong></div>
+                    </div>
+                </div>
+
+                <div class="card-body p-4">
+                    <div class="row g-4 align-items-center">
+                        <div class="col-md-8">
+                            <div class="row g-3 mb-3">
+                                <div class="col-6">
+                                    <span class="text-muted small">PASSENGER NAME</span>
+                                    <div class="fs-5 fw-bold text-dark"><?= htmlspecialchars(($booking['firstname'] ?? '') . ' ' . ($booking['lastname'] ?? '')); ?></div>
+                                </div>
+                                <div class="col-6">
+                                    <span class="text-muted small">CLASS / CATEGORY</span>
+                                    <div class="fw-bold text-dark"><?= htmlspecialchars($booking['passenger_class'] ?? 'Economy'); ?></div>
+                                </div>
+                            </div>
+
+                            <div class="p-3 bg-light rounded-3 mb-3">
+                                <div class="row align-items-center text-center">
+                                    <div class="col-5 text-start">
+                                        <span class="text-muted small">FROM</span>
+                                        <div class="fs-4 fw-bold text-primary"><?= htmlspecialchars($booking['from_city']); ?></div>
+                                        <div class="small text-muted"><?= date('H:i', strtotime($booking['departure_time'] ?? '06:00')); ?></div>
+                                    </div>
+                                    <div class="col-2 text-center fs-3 text-muted">✈</div>
+                                    <div class="col-5 text-end">
+                                        <span class="text-muted small">TO</span>
+                                        <div class="fs-4 fw-bold text-primary"><?= htmlspecialchars($booking['to_city']); ?></div>
+                                        <div class="small text-muted"><?= date('H:i', strtotime($booking['arrival_time'] ?? '08:15')); ?></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row g-3 text-center">
+                                <div class="col-3">
+                                    <div class="p-2 border rounded-3 bg-light">
+                                        <span class="text-muted small">SEAT</span>
+                                        <div class="fs-4 fw-bold text-primary"><?= htmlspecialchars($booking['seat_no'] ?? '12A'); ?></div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="p-2 border rounded-3 bg-light">
+                                        <span class="text-muted small">GATE</span>
+                                        <div class="fs-4 fw-bold text-dark">A12</div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="p-2 border rounded-3 bg-light">
+                                        <span class="text-muted small">BOARDING</span>
+                                        <div class="fs-6 fw-bold text-dark"><?= date('H:i', strtotime(($booking['departure_time'] ?? '06:00') . ' -40 minutes')); ?></div>
+                                    </div>
+                                </div>
+                                <div class="col-3">
+                                    <div class="p-2 border rounded-3 bg-light">
+                                        <span class="text-muted small">DATE</span>
+                                        <div class="small fw-bold text-dark mt-1"><?= date('d M', strtotime($booking['departure_date'])); ?></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- QR SCANNER SECTION -->
+                        <div class="col-md-4 text-center border-start ps-md-4">
+                            <h6 class="fw-bold mb-2">SCAN TO BOARD</h6>
+                            <div class="p-2 border rounded-3 d-inline-block bg-white mb-2 shadow-sm">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<?= urlencode($qrData); ?>" alt="Boarding Pass QR Code" width="150" height="150">
+                            </div>
+                            <div class="small text-muted mb-1">Verify at Security Gate</div>
+                            <span class="badge bg-success"><i class="bi bi-shield-check me-1"></i> VERIFIED & CHECKED-IN</span>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-center pt-4 mt-4 border-top">
+                        <a href="mybooking.php" class="btn btn-outline-dark rounded-pill px-4 py-2 fw-bold shadow-sm d-inline-flex align-items-center gap-2">
+                            <i class="bi bi-arrow-left fs-6"></i> Return to My Bookings
+                        </a>
+                        <div class="d-flex gap-2">
+                            <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 fw-bold shadow-sm">
+                                <i class="bi bi-printer me-1"></i> Print Boarding Pass
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
         </div>
-    </nav>
+    </div>
+</div>
 
-    <?php
-
-    session_start();
-    include ('db.php');
-
-    $pnr = $_POST['pnr'] ?? '';
-    $seat = $_POST['seat_number'] ?? '';
-
-    if (empty($pnr)) {
-        die('Invalid Request');
+<style>
+@media print {
+    nav, footer, .btn, .alert, .d-flex.flex-wrap.gap-2.justify-content-between {
+        display: none !important;
     }
-
-    $sql = "SELECT * FROM bookings WHERE pnr='$pnr'";
-    $result = mysqli_query($conn, $sql);
-
-    if (mysqli_num_rows($result) == 0) {
-        die('Booking Not Found');
+    body {
+        background: #fff !important;
     }
-
-    $row = mysqli_fetch_assoc($result);
-
-    // Seat save karo
-    mysqli_query($conn, "
-    UPDATE bookings
-    SET seat_no='$seat',
-        checkin_status='Checked-in'
-    WHERE pnr='$pnr'
-    ");
-
-    // Fresh data
-    $result = mysqli_query($conn, "SELECT * FROM bookings WHERE pnr='$pnr'");
-    $row = mysqli_fetch_assoc($result);
-
-    $qrData =
-        "SkyPort Airlines\n"
-        . 'Passenger: ' . $row['firstname'] . ' ' . $row['lastname'] . "\n"
-        . 'Flight: ' . $row['flight_name'] . "\n"
-        . 'PNR: ' . $row['pnr'] . "\n"
-        . 'From: ' . $row['from_city'] . "\n"
-        . 'To: ' . $row['to_city'] . "\n"
-        . 'Seat: ' . $row['seat_no'] . "\n"
-        . 'Status: Checked-in';
-    ?>
-
-<div class="boarding-pass">
-
-
-<div class="boarding-header">
-
-<div>
-<h1 class="airline-name">
-✈ SkyPort Airlines
-</h1>
-
-<p>BOARDING PASS</p>
-
-</div>
-
-
-<div>
-<h2 class="flight-name">
-<?= $row['flight_name']; ?>
-</h2>
-
-<p>
-<?= $row['booking_id']; ?>
-</p>
-
-</div>
-
-</div>
-
-
-
-<div class="passenger-section">
-
-
-<div class="left-details">
-
-
-<div class="passenger-box">
-
-<h6>Passenger</h6>
-
-<h3>
-<?= $row['firstname'] . ' ' . $row['lastname']; ?>
-</h3>
-
-</div>
-
-
-
-<div class="route-box">
-
-
-<div>
-
-<div class="flight-route">
-
-
-<div class="airport">
-
-<span>FROM</span>
-
-<h2>
-<?= $row['from_city']; ?>
-</h2>
-
-<p>
-Rajkot Airport
-</p>
-
-</div>
-
-
-
-<div class="route-line">
-
-<div class="line"></div>
-
-<div class="plane">
-✈
-</div>
-
-<div class="line"></div>
-
-</div>
-
-
-
-<div class="airport text-end">
-
-<span>TO</span>
-
-<h2>
-<?= $row['to_city']; ?>
-</h2>
-
-<p>
-Destination Airport
-</p>
-
-</div>
-
-
-
-</div>
-
-</div>
-
-
-</div>
-
-
-
-
-<div class="pnr-box">
-
-<h6>PNR</h6>
-
-<h3>
-<?= $row['pnr']; ?>
-</h3>
-
-
-<p>
-Booking ID : <?= $row['booking_id']; ?>
-</p>
-
-
-</div>
-
-
-</div>
-
-
-<div class="info-right">
-
-
-<div class="detail-box">
-
-<h6>Seat</h6>
-
-<h3>
-<?= $row['seat_no']; ?> 
-</h3>
-
-</div>
-
-
-
-<div class="detail-box">
-
-<h6>Gate</h6>
-
-<h3>
-<?= $gate ?? 'A12'; ?>
-</h3>
-
-</div>
-
-
-
-<div class="detail-box">
-
-<h6>Departure</h6>
-
-<h3>
-<?= $row['departure_date']; ?>
-</h3>
-
-</div>
-
-
-
-<div class="detail-box">
-
-<h6>Arrival</h6>
-
-<h3>
-<?= $row['return_date']; ?>
-</h3>
-
-</div>
-
-
-
-</div>
-
-</div>
-
-<div class="ticket-divider">
-    <span></span>
-</div>
-
-
-<div class="boarding-bottom">
-
-
-<div class="qr-section">
-<h5>Boarding Pass</h5>
-
-<h2><?= $row['pnr']; ?></h2>
-<h6>SCAN TO BOARD</h6>
-<div class="qr-card">
-<img 
-src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=<?= urlencode($qrData); ?>"
-alt="QR Code">
-
-<div class="qr-text">
-    <small>Scan to verify your boarding pass</small>
-</div>
-</div>
-</div>
-
-
-<div class="boarding-info">
-
-
-<div class="logo-box">
-
-<img src="airlogo.jpg">
-
-<h4>SkyPort Airlines</h4>
-
-</div>
-
-
-<p>
-Please carry your valid ID proof at airport.
-</p>
-
-
-<span class="checked">
-✓ Checked-in
-</span>
-
-
-</div>
-
-
-</div>
-
-
-<div class="bottom-section">
-
-
-<!-- <div>
-
-<h6>Check-in Status</h6>
-
-<span class="status">
-Checked-in
-</span>
-
-
-</div>
- -->
-<div class="text-center mt-4 text-muted">
-
-<strong>Thank you for choosing SkyPort Airlines.</strong><br>
-
-We wish you a pleasant and safe journey.
-
-</div>
-
-<div class="alert alert-success text-center mt-4">
-
-<i class="fa-solid fa-circle-check"></i>
-
-<strong>Check-in Successful!</strong>
-
-Have a pleasant journey with SkyPort Airlines.
-
-</div>
-
-
-
-</div>
-<div class="boarding-buttons">
-
-    <button class="btn btn-print" onclick="window.print()">
-        <i class="fa-solid fa-print"></i> Print Boarding Pass
-    </button>
-
-    <button class="btn btn-download" onclick="window.print()">
-        <i class="fa-solid fa-download"></i> Download PDF
-    </button>
-
-</div>
-
-<div class="text-center mt-3">
-
-    <a href="mybooking.php" class="btn btn-booking">
-        <i class="fa-solid fa-ticket"></i> Return To My Bookings!
-    </a>
-
-</div>
-
-</div>
-</body>
-</html>
+    #printableBoardingPass {
+        box-shadow: none !important;
+        border: 2px solid #000 !important;
+    }
+}
+</style>
+
+<?php include 'include/footer.php'; ?>

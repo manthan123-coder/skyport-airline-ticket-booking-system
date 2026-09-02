@@ -1,0 +1,54 @@
+[
+    {
+        "id": "news-101",
+        "title": "India-US & Metro Direct Flight Frequencies Boosted for 2026",
+        "category": "Routes & Expansion",
+        "category_color": "primary",
+        "days_ago": 0,
+        "read_time": "3 min read",
+        "image": "https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80",
+        "summary": "Major international carriers announce additional non-stop flights connecting Delhi, Mumbai & Ahmedabad with key global hubs using new eco-friendly fleets.",
+        "author": "Aviation Bureau • SkyPort Newsdesk",
+        "views": "5,420 views",
+        "full_content": "<p>In a major boost for international travel, major Indian carriers including IndiGo, Air India, and partner airlines have announced a 30% expansion in non-stop long-haul frequencies connecting major Indian metros with key destinations in North America, Europe, and the Middle East for the upcoming 2026 travel season.</p><p>The expansion leverages next-generation Airbus A350 and Boeing 787-9 Dreamliner aircraft equipped with quiet engines, upgraded satellite Wi-Fi, and enhanced ergonomic seating in both Business and Economy cabins.</p><h5>Key Highlights of the Expansion:</h5><ul><li><strong>Daily Non-Stop Flights:</strong> New daily direct service connecting Delhi (DEL) to New York (JFK) and San Francisco (SFO).</li><li><strong>Tier-2 City Connectivity:</strong> Direct international connections operating from Ahmedabad (AMD), Bengaluru (BLR), and Hyderabad (HYD).</li><li><strong>Reduced Travel Duration:</strong> Strategic polar routing saving up to 90 minutes of flight duration per sector.</li><li><strong>Enhanced Baggage Limits:</strong> Two complimentary 23kg checked bags included on all international long-haul itineraries.</li></ul><p>Spokespersons from the Ministry of Civil Aviation highlighted that this move aligns with national initiatives to position India as a premier international aviation hub by 2030.</p>"
+    },
+    {
+        "id": "news-102",
+        "title": "SkyPort Launches AI-Powered Express Terminal Web Check-in System",
+        "category": "Tech & Check-in",
+        "category_color": "success",
+        "days_ago": 1,
+        "read_time": "2 min read",
+        "image": "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=1200&q=80",
+        "summary": "Passengers can now generate official digital boarding passes in under 30 seconds with interactive 2D aircraft seat map, baggage tag generation, and live gate alerts.",
+        "author": "Tech Desk • SkyPort Innovation Lab",
+        "views": "8,190 views",
+        "full_content": "<p>SkyPort Airlines has officially rolled out its next-generation <strong>Express Terminal Web Check-in Portal</strong> across 50+ domestic and international airports. The newly upgraded system allows travelers to complete security declarations, select preferred cabin seats using an interactive 2D aircraft seat map, and generate digital boarding passes in less than 30 seconds.</p><p>The portal is fully integrated with Apple Wallet, Google Wallet, and WhatsApp messaging for instant boarding pass retrieval without requiring app downloads.</p><h5>New Features Introduced:</h5><ul><li><strong>Interactive Aircraft Seat Map:</strong> Visual 3-3 cabin view displaying window, aisle, and emergency exit seat positions in real-time.</li><li><strong>Digital Baggage Tag Generator:</strong> Instant generation of official printable baggage claim stubs linked to booking PNRs.</li><li><strong>Automated Gate Countdown:</strong> Real-time alerts for gate opening, boarding group announcements, and baggage belt updates.</li><li><strong>Zero-Touch Kiosks:</strong> QR code scanning integration at airport self-bag drop counters for instant bag tag printout.</li></ul><p>Over 85% of SkyPort passengers have opted for digital web check-in within the first week of deployment, significantly reducing security line wait times.</p>"
+    },
+    {
+        "id": "news-103",
+        "title": "Sustainable Aviation Fuel (SAF) Milestones Reached Across Tier-1 Hubs",
+        "category": "Eco-Aviation",
+        "category_color": "info",
+        "days_ago": 2,
+        "read_time": "4 min read",
+        "image": "https://images.unsplash.com/photo-1508614589041-895b88991e3e?auto=format&fit=crop&w=1200&q=80",
+        "summary": "Leading airlines achieve 15% SAF fuel blending target across premier metro corridors, significantly slashing carbon emissions on commercial routes.",
+        "author": "Environmental Desk • SkyPort Sustainability",
+        "views": "3,840 views",
+        "full_content": "<p>Aviation sustainability marked a major milestone today as domestic and international flights operating out of Delhi, Mumbai, Bengaluru, and Chennai successfully operated using a 15% Sustainable Aviation Fuel (SAF) blend supplied locally.</p><p>Produced from agricultural waste and non-food oils, SAF reduces lifecycle carbon emissions by up to 80% compared to traditional jet A-1 kerosene fuel.</p><h5>Sustainability Progress & Roadmap:</h5><ul><li><strong>Emissions Reduction:</strong> Over 12,000 metric tons of CO2 offset in the last quarter alone across operating routes.</li><li><strong>Refueling Infrastructure:</strong> Dedicated SAF hydrants installed at Terminal 3 (DEL) and Terminal 2 (BOM).</li><li><strong>Fleet Modernization:</strong> 100% compatibility with current engine technology without requiring aircraft modifications.</li><li><strong>2030 Net-Zero Target:</strong> Committing to 30% SAF blending target by 2030 across all regional domestic sectors.</li></ul><p>Travelers booking through SkyPort can now view their estimated flight carbon footprint and opt for green travel certification upon booking confirmation.</p>"
+    },
+    {
+        "id": "news-104",
+        "title": "New Airport Security & Baggage Scanner Rules Implemented Nationwide",
+        "category": "Passenger Safety",
+        "category_color": "warning",
+        "days_ago": 3,
+        "read_time": "3 min read",
+        "image": "https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=1200&q=80",
+        "summary": "Advanced 3D CT luggage scanners allow passengers to keep laptops and liquids inside carry-on baggage at security checkpoints.",
+        "author": "Safety Regulations Desk • Civil Aviation Update",
+        "views": "6,110 views",
+        "full_content": "<p>Air travelers across major metro airports will experience significantly faster security screening following the deployment of advanced 3D Computed Tomography (CT) baggage scanners at security checkpoints.</p><p>Under the new guidelines issued by civil aviation security authorities, passengers using CT scanner lanes are no longer required to remove laptops, tablets, or approved liquids from their hand baggage during screening.</p><h5>Screening Guidelines for Passengers:</h5><ul><li><strong>Laptops & Electronics:</strong> May remain stored inside cabin carry-on bags in designated 3D CT lanes.</li><li><strong>Liquids & Aerosols:</strong> Must remain under 100ml containers stored inside a clear resealable pouch.</li><li><strong>Power Banks & Batteries:</strong> Must strictly remain in cabin baggage (prohibited in checked luggage).</li><li><strong>Faster Boarding:</strong> Screening throughput increased from 180 to 350 passengers per hour per lane.</li></ul>"
+    }
+]

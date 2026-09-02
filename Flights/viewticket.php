@@ -1,312 +1,155 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="index.css">
-    <title>Confirmed section</title>
-</head>
-<body>
 <?php
-session_start();
-include ('db.php');
-$pnr = $_POST['pnr'] ?? '';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+require_once 'include/db_json.php';
 
-$sql = "SELECT * FROM bookings WHERE pnr='$pnr'";
-$result = mysqli_query($conn, $sql);
+$pnr = $_REQUEST['pnr'] ?? $_SESSION['pnr'] ?? '';
+$booking = get_booking_by_pnr($pnr);
 
-if (mysqli_num_rows($result) > 0) {
-  $row = mysqli_fetch_assoc($result);
-} else {
-  die('Ticket not found.');
+if (!$booking) {
+    die('<div class="container my-5 alert alert-danger text-center"><h5>Ticket Not Found</h5><p>No booking matches PNR: ' . htmlspecialchars($pnr) . '</p><a href="mybooking.php" class="btn btn-primary btn-sm">Back to My Bookings</a></div>');
 }
 
+$qrData = "SkyPort Airlines E-Ticket\n"
+    . "PNR: " . $booking['pnr'] . "\n"
+    . "Passenger: " . ($booking['firstname'] ?? '') . " " . ($booking['lastname'] ?? '') . "\n"
+    . "Flight: " . ($booking['flight_name'] ?? '') . "\n"
+    . "Route: " . ($booking['from_city'] ?? '') . " to " . ($booking['to_city'] ?? '') . "\n"
+    . "Status: Confirmed";
+
+include 'include/header.php';
 ?>
 
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                 <span class="logo-circle me-2">✈</span>
-                <span>SkyPort</span>
-            </a>
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-9">
+            
+            <!-- PRINTABLE TICKET CARD -->
+            <div class="card border-0 shadow-lg rounded-4 overflow-hidden" id="printableTicket">
+                <!-- TICKET HEADER -->
+                <div class="bg-primary text-white p-4 d-flex flex-wrap justify-content-between align-items-center">
+                    <div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="fs-2">✈</span>
+                            <h3 class="fw-bold mb-0">SkyPort Airlines</h3>
+                        </div>
+                        <small class="text-white-50">Official Electronic Flight Ticket (E-Ticket)</small>
+                    </div>
+                    <div class="text-end mt-2 mt-md-0">
+                        <div class="small opacity-75">PNR NUMBER</div>
+                        <div class="fs-3 fw-bold tracking-wider"><?= htmlspecialchars($booking['pnr']); ?></div>
+                    </div>
+                </div>
 
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+                <div class="card-body p-4">
+                    <!-- ROUTE & FLIGHT HEADER -->
+                    <div class="p-3 bg-light rounded-3 mb-4">
+                        <div class="row align-items-center text-center text-md-start g-3">
+                            <div class="col-md-4">
+                                <span class="text-muted small">DEPARTURE</span>
+                                <div class="fs-4 fw-bold text-dark"><?= htmlspecialchars($booking['from_city']); ?></div>
+                                <div class="text-primary fw-semibold"><?= date('H:i', strtotime($booking['departure_time'] ?? '06:00')); ?></div>
+                                <div class="small text-muted"><?= date('d M Y', strtotime($booking['departure_date'])); ?></div>
+                            </div>
+                            <div class="col-md-4 text-center">
+                                <div class="small text-muted mb-1"><?= htmlspecialchars($booking['airline_name'] ?? 'IndiGo'); ?></div>
+                                <div class="fs-5 fw-bold text-primary"><?= htmlspecialchars($booking['flight_name']); ?></div>
+                                <div class="position-relative d-flex align-items-center justify-content-center my-2">
+                                    <div class="w-100 bg-secondary opacity-25" style="height: 2px;"></div>
+                                    <i class="bi bi-airplane-fill position-absolute text-primary fs-5 bg-light px-2"></i>
+                                </div>
+                                <span class="badge bg-success small">CONFIRMED</span>
+                            </div>
+                            <div class="col-md-4 text-md-end">
+                                <span class="text-muted small">ARRIVAL</span>
+                                <div class="fs-4 fw-bold text-dark"><?= htmlspecialchars($booking['to_city']); ?></div>
+                                <div class="text-primary fw-semibold"><?= date('H:i', strtotime($booking['arrival_time'] ?? '08:15')); ?></div>
+                                <div class="small text-muted"><?= date('d M Y', strtotime($booking['departure_date'])); ?></div>
+                            </div>
+                        </div>
+                    </div>
 
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-            <li class="nav-item ms-5"><a class="nav-link active" href="index.php">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="flight.php">Flights</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Web Check-in</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">My Bookings</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Contact Us</a></li>
-                </ul>
+                    <!-- PASSENGER & BOOKING INFO GRID -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-8">
+                            <h6 class="fw-bold mb-3"><i class="bi bi-people me-2 text-primary"></i>Passenger Details</h6>
+                            <table class="table table-bordered table-sm small">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Passenger Name</th>
+                                        <th>Class / Seat</th>
+                                        <th>Baggage Allowance</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="fw-bold"><?= htmlspecialchars(($booking['firstname'] ?? '') . ' ' . ($booking['lastname'] ?? '')); ?></td>
+                                        <td><?= htmlspecialchars($booking['passenger_class'] ?? 'Economy'); ?> / <?= htmlspecialchars($booking['seat_no'] ?? 'Unassigned'); ?></td>
+                                        <td>15 KG Check-in / 7 KG Cabin</td>
+                                        <td><span class="badge bg-success"><?= htmlspecialchars($booking['checkin_status'] ?? 'Confirmed'); ?></span></td>
+                                    </tr>
+                                </tbody>
+                            </table>
 
-                <div class="d-flex align-items-center">
-                    <a class="btn btn-outline-primary me-2" href="#"><i class="bi bi-person"></i> Sign up</a>
-                    <a class="btn btn-primary" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
+                            <h6 class="fw-bold mt-4 mb-2"><i class="bi bi-info-circle me-2 text-primary"></i>Important Travel Notes</h6>
+                            <ul class="small text-muted ps-3 mb-0">
+                                <li>Please bring a valid Government-issued Photo ID (Passport / Aadhaar / Driving License).</li>
+                                <li>Check-in counters close 60 minutes prior to domestic flight departure.</li>
+                                <li>Boarding gates close 25 minutes before departure time.</li>
+                            </ul>
+                        </div>
+
+                        <!-- QR CODE & BARCODE -->
+                        <div class="col-md-4 text-center border-start ps-md-4">
+                            <h6 class="fw-bold mb-3">Scan Code</h6>
+                            <div class="p-2 border rounded-3 d-inline-block bg-white mb-2 shadow-sm">
+                                <img src="https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=<?= urlencode($qrData); ?>" alt="E-Ticket QR Code" width="140" height="140">
+                            </div>
+                            <div class="small text-muted">Booking Reference</div>
+                            <div class="fw-bold text-dark font-monospace"><?= htmlspecialchars($booking['booking_id']); ?></div>
+                        </div>
+                    </div>
+
+                    <!-- FOOTER ACTIONS -->
+                    <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center pt-3 border-top">
+                        <a href="mybooking.php" class="btn btn-outline-secondary rounded-pill px-4">
+                            <i class="bi bi-arrow-left me-1"></i> Back to Bookings
+                        </a>
+                        <div class="d-flex gap-2">
+                            <form action="webcheckin.php" method="POST" class="d-inline">
+                                <input type="hidden" name="pnr" value="<?= htmlspecialchars($booking['pnr']); ?>">
+                                <button type="submit" class="btn btn-success rounded-pill px-4">
+                                    <i class="bi bi-qr-code me-1"></i> Web Check-In
+                                </button>
+                            </form>
+                            <button onclick="window.print()" class="btn btn-primary rounded-pill px-4 fw-bold">
+                                <i class="bi bi-printer me-1"></i> Print E-Ticket
+                            </button>
+                        </div>
+                    </div>
+
                 </div>
             </div>
+
         </div>
-    </nav>
-
-<div class="container">
-
-<div class="card ticket-card">
-
-<div class="ticket-header">
-
-<h2>🎉 Booking Details</h2>
-
-<p>View your Confirmed itinerary.</p>
-
-</div>
-
-<div class="card-body p-4">
-
-<!-- Booking Details -->
-
-<div class="info-box">
-
-<h5 class="section-title">Booking Information</h5>
-
-<div class="row">
-
-<div class="col-md-6">
-<p><strong>Booking ID:</strong>
-<?= $row['booking_id']; ?>
-</p>
-
-<p><strong>PNR:</strong>
-<?= $row['pnr']; ?>
-</p>
-</div>
-
-</div>
-
-</div>
-
-<!-- Flight Details -->
-
-<div class="info-box">
-
-<h5 class="section-title">Flight Details</h5>
-
-<p>
-<strong>Flight:</strong>
-<?= $row['flight_name']; ?>
-</p>
-
-<div class="route">
-<?= $row['from_city']; ?>
-✈
-<?= $row['to_city']; ?>
-</div>
-
-<hr>
-
-<div class="row">
-
-<div class="col-md-3">
-<strong>Departure</strong><br>
-<?= $row['departure_date']; ?>
-</div>
-
-<div class="col-md-3">
-<strong>Return</strong><br>
-<?= $row['return_date']; ?>
-</div>
-
-<div class="col-md-3">
-<strong>Departure Time</strong><br>
-<?= $_SESSION['departure_time'] ?? ''; ?>
-</div>
-
-<div class="col-md-3">
-<strong>Arrival Time</strong><br>
-<?= $_SESSION['arrival_time'] ?? ''; ?>
-</div>
-
-</div>
-
-</div>
-
-<!-- Passenger Details -->
-
-<div class="info-box">
-
-<h5 class="section-title">Passenger Details</h5>
-
-<div class="row">
-
-<div class="col-md-6">
-<p><strong>Name:</strong>
-<?= $row['firstname']; ?>
-<?= $row['lastname']; ?>
-</p>
-
-<p><strong>Gender:</strong>
-<?= $_SESSION['gender'] ?? ''; ?>
-</p>
-
-<p><strong>Nationality:</strong>
-<?= $_SESSION['nationality'] ?? ''; ?>
-</p>
-</div>
-
-<div class="col-md-6">
-
-<p><strong>Email:</strong>
-<?= $row['email']; ?>
-</p>
-
-<p><strong>Phone:</strong>
-<?= $row['phone']; ?>
-</p>
-
-<p><strong>Date of Birth:</strong>
-<?= $_SESSION['dob'] ?? ''; ?>
-</p>
-
-</div>
-
-</div>
-
-</div>
-
-<!-- Payment -->
-
-<div class="info-box">
-
-<h5 class="section-title">Payment Information</h5>
-
-<p>
-<strong>Payment Status:</strong>
-<span class="status">
-<?= $row['payment_status']; ?>
-</span>
-</p>
-
-<p>
-<strong>Amount Paid:</strong>
-₹<?= $row['amount']; ?>
-</p>
-
-</div>
-
-<div class="ticket-footer">
-
-<!-- <button onclick="window.print()"
-class="btn btn-primary me-2">
-🖨 View Ticket
-</button> -->
-<a href="mybooking.php"
-  class="btn btn-primary">
-  🖨 Download Ticket
-</a>
-
-<form action="webcheckin.php" method="POST">
-    <input type="hidden" name="pnr" value="<?= $row['pnr']; ?>">
-    <button class="btn btn-success">Web Check-in</button>
-</form>
-<a href="index.php"
-class="btn btn-secondary">
-🏠 Back To Home
-</a>
-
-</div>
-
-</div>
-
-</div>
-
-</div>
-
-    <footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-
-      <!-- Logo & Subscribe -->
-      <div class="footer-col">
-        <div class="footer-logo">
-        <span class="logo-circle me-2">✈</span>
-          <img src="logo.svg" alt="">
-          <span>Sky Port</span>
-          
-          
-        </div>
-        <p class="footer-text">
-          Lorem ipsum dolor sit amet consectetur. Aliquet vulputate augue penatibus in libero et id aliquam.
-          In ridiculus pretium est velit euismod.
-        </p>
-
-        <h6 class="footer-title">Subscribe to our special offers</h6>
-        <form class="subscribe-box">
-          <input type="email" placeholder="Email address">
-          <button type="submit">Subscribe</button>
-        </form>
-      </div>
-
-      <!-- Booking -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Booking</h5>
-        <ul>
-          <li><a href="#">Book Flights</a></li>
-          <li><a href="#">Travel Services</a></li>
-          <li><a href="#">Transportation</a></li>
-          <li><a href="#">Planning Your Trip</a></li>
-        </ul>
-      </div>
-
-      <!-- Useful Links -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Useful Links</h5>
-        <ul>
-          <li><a href="index.php">Home</a></li>
-          <li><a href="#">Blogs</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Contact Us</a></li>
-        </ul>
-      </div>
-
-      <!-- Manage -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Manage</h5>
-        <ul>
-          <li><a href="#">Check-in</a></li>
-          <li><a href="#">Manage Your Booking</a></li>
-          <li><a href="#">Chauffeur Drive</a></li>
-          <li><a href="#">Flight Status</a></li>
-        </ul>
-      </div>
-
-      <!-- Contact -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Contact Us</h5>
-        <ul class="contact-list">
-          <li>📍 123 Main Street, Anytown, USA.</li>
-          <li>📞 <a href="tel:+1234567890">+1 234 567 890</a></li>
-          <li>✉️ <a href="mailto:email@example.com">email@example.com</a></li>
-        </ul>
-
-        <h6 class="footer-title">Follow Us!</h6>
-        <div class="social-icons">
-          <a href="#">in</a>
-          <a href="#">f</a>
-          <a href="#">ig</a>
-          <a href="#">x</a>
-        </div>
-      </div>
-
     </div>
+</div>
 
-    <div class="footer-bottom">
-      ©2025 FlyNow All Rights Reserved.
-    </div>
-  </div>
-</footer>
-</body>
-</html>
+<style>
+@media print {
+    nav, footer, .btn, .d-flex.flex-wrap.gap-2.justify-content-between {
+        display: none !important;
+    }
+    body {
+        background: #fff !important;
+    }
+    #printableTicket {
+        box-shadow: none !important;
+        border: 1px solid #ddd !important;
+    }
+}
+</style>
+
+<?php include 'include/footer.php'; ?>

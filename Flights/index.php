@@ -1,657 +1,346 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+include 'include/header.php';
+?>
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>SkyPort— Airport Booking</title>
-
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="0fc46d2a-4479-4573-a6b4-9c21ef7e10e1.css"> -->
-    <link rel="stylesheet" href="index.css">
-    <!-- Bootstrap Icons -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
-
-    <!-- External CSS
-    <link rel="stylesheet" href="index.css"> -->
-
-    <!-- Optional: Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
-
-</head>
-<body>
-
-     <!-- NAVBAR -->
-     <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
-        <div class="container">
-            <a class="navbar-brand d-flex align-items-center fw-bold" href="#">
-                <span class="logo-circle me-2">✈</span>
-                <span>SkyPort</span>
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                    <li class="nav-item ms-5"><a class="nav-link active" href="#">Home</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="flight.php">Flights</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Web Check-in</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">My Bookings</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Offers</a></li>
-                    <li class="nav-item ms-5"><a class="nav-link" href="#">Contact Us</a></li>
-                </ul>
-
-                <div class="d-flex align-items-center">
-                    <a class="btn btn-outline-primary me-2" href="#"><i class="bi bi-person"></i> Sign up</a>
-                    <a class="btn btn-primary" href="login.php"><i class="bi bi-box-arrow-in-right"></i> Login</a>
-                </div>
+<!-- HERO SECTION -->
+<header class="hero-section py-5 position-relative text-white" style="background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%); margin-top: -75px;">
+    <div class="container hero-content py-5">
+        <div class="row align-items-center mb-4">
+            <div class="col-lg-8">
+                <h1 class="display-4 fw-bold mb-3">Book Your Dream Flight Fast & Easy!</h1>
+                <p class="lead mb-0 text-white-50">Real-time schedules, flexible ticketing, and instant boarding pass generation.</p>
             </div>
         </div>
-    </nav>
-    <!-- /NAVBAR -->
 
+        <!-- SEARCH CARD -->
+        <div id="search" class="search-card card shadow-lg text-dark border-0 rounded-4">
+            <div class="card-body p-4">
+                
+                <form action="flight.php" method="GET">
+                    
+                    <!-- Trip Type Radio Buttons -->
+                    <div class="d-flex align-items-center mb-3">
+                        <div class="form-check me-4">
+                            <input class="form-check-input" type="radio" name="trip_type" value="oneway" id="oneway">
+                            <label class="form-check-label fw-semibold" for="oneway">One Way</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="trip_type" value="roundtrip" id="roundtrip" checked>
+                            <label class="form-check-label fw-semibold" for="roundtrip">Round Trip</label>
+                        </div>
+                    </div>
 
-    <!-- HERO -->
-    <header class="hero-section">
-        <div class="hero-bg"></div>
-        <div class="container hero-content">
-            <div class="row align-items-center">
-                <div class="col-lg-6 text-white">
-                    <h1 class="display-5 fw-bold">Book Your Dream Flights Now!</h1>
-                    <p class="lead mb-4">Fast, reliable and easy flight booking with real-time schedules and great
-                        deals.</p>
-                    <a href="#search" class="btn btn-outline-light btn-lg me-2">Book Now</a>
-                    <a href="#deals" class="btn btn-light btn-lg">See Deals</a>
-                    <!-- <img src="https://images.unsplash.com/photo-1504196606672-aef5c9cefc92?auto=format&fit=crop&w=1500&q=80" alt=""> -->
-                </div>
+                    <div class="row g-3 align-items-end">
+                        <!-- From City -->
+                        <div class="col-md-3 position-relative">
+                            <label class="form-label fw-semibold small text-muted">From City</label>
+                            <select name="from_city" class="form-select py-2" required>
+                              <option value="">Select Origin City</option>
+                              <option value="Delhi">Delhi (DEL)</option>
+                              <option value="Mumbai">Mumbai (BOM)</option>
+                              <option value="Bangalore">Bangalore (BLR)</option>
+                              <option value="Hyderabad">Hyderabad (HYD)</option>
+                              <option value="Chennai">Chennai (MAA)</option>
+                              <option value="Kolkata">Kolkata (CCU)</option>                              
+                              <option value="Ahmedabad">Ahmedabad (AMD)</option>
+                              <option value="Pune">Pune (PNQ)</option>
+                              <option value="Goa">Goa (GOX)</option>
+                              <option value="Jaipur">Jaipur (JAI)</option>
+                              <option value="Lucknow">Lucknow (LKO)</option>
+                              <option value="Kanpur">Kanpur (KNU)</option>
+                              <option value="Patna">Patna (PAT)</option>                              
+                              <option value="Surat">Surat (STV)</option>
+                              <option value="Rajkot">Rajkot (RAJ)</option>
+                              <option value="Vadodara">Vadodara (BDQ)</option>
+                              <option value="Indore">Indore (IDR)</option>
+                              <option value="Bhopal">Bhopal (BHO)</option>
+                              <option value="Nagpur">Nagpur (NAG)</option>                              
+                              <option value="Chandigarh">Chandigarh (IXC)</option>
+                              <option value="Jammu">Jammu (IXJ)</option>
+                              <option value="Srinagar">Srinagar (SXR)</option>
+                              <option value="Amritsar">Amritsar (ATQ)</option>
+                              <option value="Varanasi">Varanasi (VNS)</option>
+                              <option value="Ranchi">Ranchi (IXR)</option>                              
+                              <option value="Bhubaneswar">Bhubaneswar (BBI)</option>
+                              <option value="Guwahati">Guwahati (GAU)</option>
+                              <option value="Kochi">Kochi (COK)</option>
+                              <option value="Coimbatore">Coimbatore (CJB)</option>
+                              <option value="Visakhapatnam">Visakhapatnam (VTZ)</option>
+                              <option value="Thiruvananthapuram">Thiruvananthapuram (TRV)</option>
+                            </select>
+                        </div>
 
+                        <!-- To City -->
+                        <div class="col-md-3 position-relative">
+                            <label class="form-label fw-semibold small text-muted">To City</label>
+                            <select name="to_city" class="form-select py-2" required>
+                              <option value="">Select Destination City</option>
+                              <option value="Delhi">Delhi (DEL)</option>
+                              <option value="Mumbai">Mumbai (BOM)</option>
+                              <option value="Bangalore">Bangalore (BLR)</option>
+                              <option value="Hyderabad">Hyderabad (HYD)</option>
+                              <option value="Chennai">Chennai (MAA)</option>
+                              <option value="Kolkata">Kolkata (CCU)</option>                              
+                              <option value="Ahmedabad">Ahmedabad (AMD)</option>
+                              <option value="Pune">Pune (PNQ)</option>
+                              <option value="Goa">Goa (GOX)</option>
+                              <option value="Jaipur">Jaipur (JAI)</option>
+                              <option value="Lucknow">Lucknow (LKO)</option>
+                              <option value="Kanpur">Kanpur (KNU)</option>
+                              <option value="Patna">Patna (PAT)</option>                              
+                              <option value="Surat">Surat (STV)</option>
+                              <option value="Rajkot">Rajkot (RAJ)</option>
+                              <option value="Vadodara">Vadodara (BDQ)</option>
+                              <option value="Indore">Indore (IDR)</option>
+                              <option value="Bhopal">Bhopal (BHO)</option>
+                              <option value="Nagpur">Nagpur (NAG)</option>                              
+                              <option value="Chandigarh">Chandigarh (IXC)</option>
+                              <option value="Jammu">Jammu (IXJ)</option>
+                              <option value="Srinagar">Srinagar (SXR)</option>
+                              <option value="Amritsar">Amritsar (ATQ)</option>
+                              <option value="Varanasi">Varanasi (VNS)</option>
+                              <option value="Ranchi">Ranchi (IXR)</option>                              
+                              <option value="Bhubaneswar">Bhubaneswar (BBI)</option>
+                              <option value="Guwahati">Guwahati (GAU)</option>
+                              <option value="Kochi">Kochi (COK)</option>
+                              <option value="Coimbatore">Coimbatore (CJB)</option>
+                              <option value="Visakhapatnam">Visakhapatnam (VTZ)</option>
+                              <option value="Thiruvananthapuram">Thiruvananthapuram (TRV)</option>
+                            </select>
+                        </div>
 
-            </div>
-        </div>
-<br>
-        <!-- SEARCH CARD (Tabbed) -->
-        <div id="search" class="search-card card shadow-lg " >
-            <div class="card-body p-3 p-md-4">
-                <ul class="nav nav-tabs mb-1" role="tablist">
-                    <li class="nav-item" role="presentation">
-                        <button class="nav-link active" id="flights-tab" data-bs-toggle="tab" data-bs-target="#flights"
-                            type="button" role="">Search Flights</button>
-                    </li>
-             
-                </ul>
+                        <!-- Departure Date -->
+                        <div class="col-md-2">
+                            <label class="form-label fw-semibold small text-muted">Departure Date</label>
+                            <input type="text" id="departureDate" name="departure_date" class="form-control py-2 bg-white" placeholder="Select Date" readonly required>
+                        </div>
 
-                <div class="tab-content overflow: visible !important;">
-                    <!-- FLIGHTS TAB -->
-                    <div class="tab-pane fade show active" id="flights" role="tabpanel">
-                       <form action="flight.php" method="POST" class="row g-2 align-items-end">
-                            <div class="col-md-2">
-                                <label class="form-label small">From</label>
-                               
-                                <select name="from_city" class="form-select"  required>
-                                            <option value="">Select City</option>
+                        <!-- Return Date -->
+                        <div class="col-md-2" id="returnBox">
+                            <label class="form-label fw-semibold small text-muted">Return Date</label>
+                            <input type="text" id="returnDate" name="return_date" class="form-control py-2 bg-white" placeholder="Select Date" readonly>
+                        </div>
 
-                                            <option value="Agra">Agra</option>
-                                            <option value="Ahmedabad">Ahmedabad</option>
-                                            <option value="Amritsar">Amritsar</option>
-                                            <option value="Aurangabad">Aurangabad</option>
-                                            <option value="Bangalore">Bangalore</option>
-                                            <option value="Bhavnagar">Bhavnagar</option>
-                                            <option value="Bhopal">Bhopal</option>
-                                            <option value="Chandigarh">Chandigarh</option>
-                                            <option value="Chennai">Chennai</option>
-                                            <option value="Coimbatore">Coimbatore</option>
-                                            <option value="Dehradun">Dehradun</option>
-                                            <option value="Delhi">Delhi</option>
-                                            <option value="Goa">Goa</option>
-                                            <option value="Guwahati">Guwahati</option>
-                                            <option value="Hyderabad">Hyderabad</option>
-                                            <option value="Indore">Indore</option>
-                                            <option value="Jaipur">Jaipur</option>
-                                            <option value="Kochi">Kochi</option>
-                                            <option value="Kolkata">Kolkata</option>
-                                            <option value="Lucknow">Lucknow</option>
-                                            <option value="Mumbai">Mumbai</option>
-                                            <option value="Nagpur">Nagpur</option>
-                                            <option value="Patna">Patna</option>
-                                            <option value="Pune">Pune</option>
-                                            <option value="Rajkot">Rajkot</option>
-                                            <option value="Surat">Surat</option>
-                                            <option value="Vadodara">Vadodara</option>
-                                            <option value="Varanasi">Varanasi</option>
-                                            <option value="Visakhapatnam">Visakhapatnam</option>
-                                           </div>
-                                          </div>
-                                          </select>                                      
-                                          </div>
+                        <!-- Passengers / Class Dropdown -->
+                        <div class="col-md-2 position-relative" id="passengerBox">
+                            <label class="form-label fw-semibold small text-muted">Passengers / Class</label>
+                            <button type="button" id="passengerDropdownBtn" class="form-control py-2 text-start bg-white text-truncate">
+                                <span id="summary">1 Adult, Economy</span>
+                            </button>
 
-                            <div class="col-md-2">
-                               <label class="form-label small">To</label>
-                                <select name="to_city" class="form-select" required>
-                                <option value="">Select City</option>
+                            <!-- Modern Airline Passenger & Cabin Class Selector Card -->
+                            <div id="passengerMenu" class="passenger-card shadow-lg p-3 bg-white rounded-4 border position-absolute" style="display: none; z-index: 1050; top: 100%; right: 0; min-width: 310px; margin-top: 8px;">
+                                <!-- Header -->
+                                <div class="d-flex align-items-center justify-content-between pb-2 mb-3 border-bottom">
+                                    <div>
+                                        <h6 class="fw-bold m-0 text-dark">Passengers & Class</h6>
+                                        <small class="text-muted" style="font-size: 0.75rem;">Select travelers & cabin class</small>
+                                    </div>
+                                    <span class="badge bg-primary-subtle text-primary fw-semibold px-2 py-1" style="font-size: 0.7rem;">SkyPort</span>
+                                </div>
 
-        <option value="Agra">Agra</option>
-        <option value="Ahmedabad">Ahmedabad</option>
-        <option value="Amritsar">Amritsar</option>
-        <option value="Aurangabad">Aurangabad</option>
-        <option value="Bangalore">Bangalore</option>
-        <option value="Bhavnagar">Bhavnagar</option>
-        <option value="Bhopal">Bhopal</option>
-        <option value="Chandigarh">Chandigarh</option>
-        <option value="Chennai">Chennai</option>
-        <option value="Coimbatore">Coimbatore</option>
-        <option value="Dehradun">Dehradun</option>
-        <option value="Delhi">Delhi</option>
-        <option value="Goa">Goa</option>
-        <option value="Guwahati">Guwahati</option>
-        <option value="Hyderabad">Hyderabad</option>
-        <option value="Indore">Indore</option>
-        <option value="Jaipur">Jaipur</option>
-        <option value="Kochi">Kochi</option>
-        <option value="Kolkata">Kolkata</option>
-        <option value="Lucknow">Lucknow</option>
-        <option value="Mumbai">Mumbai</option>
-        <option value="Nagpur">Nagpur</option>
-        <option value="Patna">Patna</option>
-        <option value="Pune">Pune</option>
-        <option value="Rajkot">Rajkot</option>
-        <option value="Surat">Surat</option>
-        <option value="Vadodara">Vadodara</option>
-        <option value="Varanasi">Varanasi</option>
-        <option value="Visakhapatnam">Visakhapatnam</option>
-
+                                <!-- Adults -->
+                                <div class="d-flex align-items-center justify-content-between py-2 border-bottom">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.88rem;">Adults</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">12+ years</div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="passenger-count-btn" onclick="changeCount('adult', -1)" aria-label="Decrease Adults">−</button>
+                                        <span id="adult" class="fw-bold px-2">1</span>
+                                        <button type="button" class="passenger-count-btn" onclick="changeCount('adult', 1)" aria-label="Increase Adults">+</button>
                                     </div>
                                 </div>
-    </select>
+
+                                <!-- Children -->
+                                <div class="d-flex align-items-center justify-content-between py-2 border-bottom mb-3">
+                                    <div>
+                                        <div class="fw-bold text-dark" style="font-size: 0.88rem;">Children</div>
+                                        <div class="text-muted" style="font-size: 0.75rem;">2 – 12 years</div>
+                                    </div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <button type="button" class="passenger-count-btn" onclick="changeCount('child', -1)" aria-label="Decrease Children">−</button>
+                                        <span id="child" class="fw-bold px-2">0</span>
+                                        <button type="button" class="passenger-count-btn" onclick="changeCount('child', 1)" aria-label="Increase Children">+</button>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="travelClass" class="small text-muted mb-1">Travel Class</label>
+                                    <select id="travelClass" class="form-select form-select-sm" onchange="updateSummary()">
+                                        <option value="Economy">Economy</option>
+                                        <option value="Business">Business</option>
+                                        <option value="First Class">First Class</option>
+                                    </select>
+                                </div>
+                                <button type="button" id="donePassenger" class="btn btn-primary btn-sm w-100">Done</button>
                             </div>
 
-<div class="col-md-2">
+                            <input type="hidden" name="passenger_class" id="passenger_class" value="1 Adult, Economy">
+                        </div>
 
-<label class="form-label small">Departure</label>
-<input 
-type="text"
-id="departureDate"
-name="departure_date"
-class="form-control py-2"
-placeholder="Departure"
-readonly> 
-
-</div>
-
-
-<div class="col-md-2" id="returnBox">
-<label class="form-label small">Return</label>
-    <input
-    type="text"
-    id="returnDate"
-    name="return_date"
-    class="form-control py-2"
-    placeholder="Return"
-    readonly>
-
-</div>
-
-              <div class="col-md-2 position-relative" id="passengerBox">
-
-    <label class="form-label small">Passengers / Class</label>
-
-    <button type="button"
-        id="passengerDropdownBtn"
-        class="form-control text-start">
-
-        <span id="summary">1 Adult, Economy</span>
-
-    </button>
-
-    <div id="passengerMenu" class="passenger-menu">
-
-        <!-- Adult -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-
-            <span>Adults</span>
-
-            <div class="d-flex align-items-center gap-2">
-
-                <button type="button" onclick="changeCount('adult',-1)">−</button>
-
-                <span id="adult">1</span>
-
-                <button type="button" onclick="changeCount('adult',1)">+</button>
-
-            </div>
-
-        </div>
-
-        <!-- Child -->
-        <div class="d-flex justify-content-between align-items-center mb-3">
-
-            <span>Children</span>
-
-            <div class="d-flex align-items-center gap-2">
-
-                <button type="button" onclick="changeCount('child',-1)">−</button>
-
-                <span id="child">0</span>
-
-                <button type="button" onclick="changeCount('child',1)">+</button>
-
-            </div>
-
-        </div>
-
-        <div class="mb-3">
-
-            <label class="small mb-1">Travel Class</label>
-
-            <select id="travelClass" class="form-select">
-
-                <option>Economy</option>
-                <option>Business</option>
-                <option>First Class</option>
-
-            </select>
-
-        </div>
-
-        <button id="donePassenger"
-            class="btn btn-primary w-100">
-
-            Done
-
-        </button>
-
-    </div>
-
-    <input type="hidden" name="passenger_class" id="passenger_class" value="1 Adult, Economy">
-
-    <input type="hidden" name="passenger_class" id="passenger_class">
-</div>
-<div class="col-md-2 my-2" id="searchBox">
-    <button type="submit" class="btn btn-primary btn-lg- me-2">
-        Search Flights
-    </button>
-     <!-- <a href="#search" class="btn btn-outline-light btn-lg me-2">Book Now</a> -->
-</div>
-</div>
-
-
-
-
-<div class="col-md-3 d-flex align-items-center mt-4">
-
-    <div class="form-check me-3">
-        <input 
-        class="form-check-input"
-        type="radio"
-        name="trip_type"
-        value="oneway"
-        id="oneway">
-
-        <label class="form-check-label" for="oneway">
-            One Way
-        </label>
-    </div>
-
-
-    <div class="form-check">
-        <input 
-        class="form-check-input"
-        type="radio"
-        name="trip_type"
-        value="roundtrip"
-        id="roundtrip"
-        checked>
-
-        <label class="form-check-label" for="roundtrip">
-            Round Trip
-        </label>
-    </div>
-
-</div>
-
-
-                          
-                     
-                        </form>
-                    </div>
-                    <!-- /FLIGHTS TAB -->
-
-                    <!-- HOTEL TAB (simple placeholder) -->
-                  
-            <!-- Rooms -->
-          
-    </header>
-    <!-- /HERO -->
-
-    <main class="mt-5 pt-5">
-        <div class="container">
-
-            <!-- INFO CARDS -->
-            <div class="row my-5 g-3">
-                <div class="col-md-4">
-                    <div class="info-card p-3 shadow-sm">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-circle me-3"><i class="bi bi-headset"></i></div>
-                            <div>
-                                <h6 class="mb-0">We are Now Available</h6>
-                                <small class="text-muted">Call +1 555 666 888</small>
-                            </div>
+                        <!-- Search Button -->
+                        <div class="col-12 text-end mt-4">
+                            <button type="submit" class="btn btn-warning btn-lg px-5 fw-bold text-dark shadow-sm">
+                                <i class="bi bi-search me-2"></i> Search Flights
+                            </button>
                         </div>
                     </div>
-                </div>
 
-                <div class="col-md-4">
-                    <div class="info-card p-3 shadow-sm">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-circle me-3"><i class="bi bi-globe2"></i></div>
-                            <div>
-                                <h6 class="mb-0">International Flight</h6>
-                                <small class="text-muted">Worldwide routes</small>
-                            </div>
+                </form>
+            </div>
+        </div>
+
+    </div>
+</header>
+
+<main class="container my-5">
+    <!-- INFO CARDS -->
+    <div class="row my-4 g-3">
+        <div class="col-md-4">
+            <div class="card p-3 border-0 shadow-sm rounded-3">
+                <div class="d-flex align-items-center">
+                    <div class="fs-2 text-primary me-3"><i class="bi bi-headset"></i></div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">24/7 Support Available</h6>
+                        <small class="text-muted">Call +1 800 123 4567</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-3 border-0 shadow-sm rounded-3">
+                <div class="d-flex align-items-center">
+                    <div class="fs-2 text-primary me-3"><i class="bi bi-globe2"></i></div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">Domestic & International</h6>
+                        <small class="text-muted">Connecting 50+ Top Destinations</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card p-3 border-0 shadow-sm rounded-3">
+                <div class="d-flex align-items-center">
+                    <div class="fs-2 text-primary me-3"><i class="bi bi-shield-check"></i></div>
+                    <div>
+                        <h6 class="mb-0 fw-bold">Instant Web Check-in</h6>
+                        <small class="text-muted">Fast boarding pass generation</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Statistics & Achievements (Why Choose SkyPort?) -->
+    <section class="card border-0 shadow-sm rounded-4 p-4 my-5 bg-white" aria-label="SkyPort Statistics">
+        <h2 class="h3 fw-bold text-center mb-4">Why Choose SkyPort?</h2>
+        <div class="row text-center g-3">
+            <div class="col-md-4 col-6">
+                <p class="h2 fw-bold text-primary mb-0">250,000+</p>
+                <small class="text-muted">Flights Managed</small>
+            </div>
+            <div class="col-md-4 col-6">
+                <p class="h2 fw-bold text-primary mb-0">32M+</p>
+                <small class="text-muted">Passengers Served</small>
+            </div>
+            <div class="col-md-4 col-6">
+                <p class="h2 fw-bold text-primary mb-0">98.5%</p>
+                <small class="text-muted">On-Time Performance</small>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Latest News (Live Daily Airline & Aviation Updates) -->
+    <section class="my-5" aria-label="Latest Airline News">
+        <div class="d-flex flex-wrap align-items-center justify-content-between mb-4">
+            <div>
+                <span class="badge bg-primary-subtle text-primary fw-bold px-3 py-2 rounded-pill mb-2">
+                    <i class="bi bi-newspaper me-1"></i> Aviation Insights
+                </span>
+                <h2 class="h3 fw-bold text-dark mb-1">Our Latest News</h2>
+                <p class="text-muted small mb-0">Live daily updates on flights, route expansions, travel guidelines, and aviation technology</p>
+            </div>
+            <div class="mt-2 mt-md-0">
+                <span class="badge bg-danger-subtle text-danger border border-danger-subtle rounded-pill px-3 py-2">
+                    <i class="bi bi-broadcast me-1 animate-pulse"></i> Live Daily Updates
+                </span>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- News Card 1 -->
+            <div class="col-lg-4 col-md-6">
+                <article class="card news-card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <div class="position-relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=600&q=80" class="card-img-top news-img" alt="Airline Route Expansion">
+                        <span class="badge bg-primary position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill shadow-sm">Routes & Expansion</span>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between text-muted small mb-2">
+                            <span><i class="bi bi-calendar3 me-1"></i> Today, Aug 04, 2026</span>
+                            <span><i class="bi bi-clock me-1"></i> 3 min read</span>
+                        </div>
+                        <h3 class="h6 card-title fw-bold text-dark mb-2">India-US Direct Flight Frequencies Boosted for Winter 2026</h3>
+                        <p class="card-text text-muted small flex-grow-1">Major international carriers announce additional non-stop flights connecting Delhi & Mumbai with key global hubs using new eco-friendly fleets.</p>
+                        <div class="pt-3 border-top d-flex align-items-center justify-content-between">
+                            <span class="text-primary fw-semibold small">Read Full Story <i class="bi bi-arrow-right ms-1"></i></span>
+                            <span class="badge bg-light text-dark"><i class="bi bi-fire text-danger me-1"></i> Trending</span>
                         </div>
                     </div>
-                </div>
+                </article>
+            </div>
 
-                <div class="col-md-4">
-                    <div class="info-card p-3 shadow-sm">
-                        <div class="d-flex align-items-center">
-                            <div class="icon-circle me-3"><i class="bi bi-arrow-counterclockwise"></i></div>
-                            <div>
-                                <h6 class="mb-0">Check Refund</h6>
-                                <small class="text-muted">Easy refund policy</small>
-                            </div>
+            <!-- News Card 2 -->
+            <div class="col-lg-4 col-md-6">
+                <article class="card news-card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <div class="position-relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=600&q=80" class="card-img-top news-img" alt="Digital Airport Checkin">
+                        <span class="badge bg-success position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill shadow-sm">Tech & Check-in</span>
+                    </div>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between text-muted small mb-2">
+                            <span><i class="bi bi-calendar3 me-1"></i> Aug 03, 2026</span>
+                            <span><i class="bi bi-clock me-1"></i> 2 min read</span>
+                        </div>
+                        <h3 class="h6 card-title fw-bold text-dark mb-2">SkyPort Upgrades 30+ Airports with Instant Mobile Web Check-in</h3>
+                        <p class="card-text text-muted small flex-grow-1">Passengers can now generate digital boarding passes in under 30 seconds with real-time seat selection and live baggage tracking notifications.</p>
+                        <div class="pt-3 border-top d-flex align-items-center justify-content-between">
+                            <span class="text-primary fw-semibold small">Read Full Story <i class="bi bi-arrow-right ms-1"></i></span>
+                            <span class="badge bg-light text-dark"><i class="bi bi-lightning-fill text-warning me-1"></i> Feature</span>
                         </div>
                     </div>
-                </div>
+                </article>
             </div>
-            <!-- /INFO CARDS -->
 
-            <!-- LATEST FLIGHT DEALS (Carousel + Grid fallback) -->
-                    <br><br>
-
-
-
-                    <!-- =================achivment section -->
-
-
-                    <div class="achievement-card">
-
-<div class="card-header">
-  <h1>Achivments</h1>
-</div>
-<hr>
-<div class="stats">
-  <div class="stat-box">
-    <h2>250,000+</h2>
-    <span>Flights Managed</span>
-  </div>
-  <div class="stat-box">
-    <h2>32M+</h2>
-    <span>Passengers Served</span>
-  </div>
-  <div class="stat-box">
-    <h2>94%</h2>
-    <span>On-Time Performance</span>
-  </div>
-  <div class="stat-box">
-    <h2>98.5%</h2>
-    <span>Baggage Accuracy</span>
-  </div>
-  <div class="stat-box">
-    <h2>25+</h2>
-    <span>Airline Partners</span>
-  </div>
-  <div class="stat-box">
-    <h2>0</h2>
-    <span>Major Safety Incidents</span>
-  </div>
-</div>
-
-               
-            <!-- /DEALS -->
-
-            <!-- FOOTER CTA -->
-            <section class="pt-4 pb-5">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h5 class="fw-bold">Need help? Our support team is available 24/7</h5>
-                        <p class="text-muted mb-0">Call +1 555 666 888 or email support@flynow.com</p>
+            <!-- News Card 3 -->
+            <div class="col-lg-4 col-md-6">
+                <article class="card news-card h-100 border-0 shadow-sm rounded-4 overflow-hidden bg-white">
+                    <div class="position-relative overflow-hidden">
+                        <img src="https://images.unsplash.com/photo-1508873696983-2df5057d0256?auto=format&fit=crop&w=600&q=80" class="card-img-top news-img" alt="Eco Aviation Flight">
+                        <span class="badge bg-info text-dark position-absolute top-0 start-0 m-3 px-3 py-2 rounded-pill shadow-sm">Eco-Aviation</span>
                     </div>
-                    <div class="col-md-4 text-md-end mt-3 mt-md-0">
-                        <a class="btn btn-outline-primary btn-lg" href="#">Contact us</a>
+                    <div class="card-body p-4 d-flex flex-column">
+                        <div class="d-flex align-items-center justify-content-between text-muted small mb-2">
+                            <span><i class="bi bi-calendar3 me-1"></i> Aug 02, 2026</span>
+                            <span><i class="bi bi-clock me-1"></i> 4 min read</span>
+                        </div>
+                        <h3 class="h6 card-title fw-bold text-dark mb-2">Sustainable Aviation Fuel (SAF) Milestones Reached Across Tier-1 Cities</h3>
+                        <p class="card-text text-muted small flex-grow-1">Domestic airlines commit to 15% SAF blend on premier metro routes, reducing net carbon emissions and supporting green travel initiatives.</p>
+                        <div class="pt-3 border-top d-flex align-items-center justify-content-between">
+                            <span class="text-primary fw-semibold small">Read Full Story <i class="bi bi-arrow-right ms-1"></i></span>
+                            <span class="badge bg-light text-dark"><i class="bi bi-leaf-fill text-success me-1"></i> Green News</span>
+                        </div>
                     </div>
-                </div>
-            </section>
-
+                </article>
+            </div>
         </div>
-    </main>
-    <!-- ==============================news -->
+    </section>
+</main>
 
-<br>
-
-<h2 align="center"><span style="color: black" >Our Latest News</span></h2>
-<br> <hr>
-    <div class="row row-gap-4">
-    <div class="col-xxl-6 col-xl-4 col-lg-12 col-md-6 col-sm-5">
-      <div class="blog-box bg-skyblue light-shadow p-24 br-20">
-        <div class="row align-items-center row-gap-2">
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="image-box">
-              <a href="blog-detail.html"><img src="images\img1.jpg"alt=""></a>
-            </div>
-          </div>
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="content-box">
-              <div class="d-flex gap-16 mb-24">
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/user-bk.png" alt="">
-                  <p class=""<span style="color: blue">Malisa John</span></p>
-                </div>
-                <div class="vr-line"></div>
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/calender.png" alt="">
-                  <p class=""><span style="color: Black">08 Aug, 2023</span></p>
-                </div>
-              </div>
-              <h5 class="lightest-black mb-8"><a href="blog-detail.html"><span style="color: Black">Passenger Experience Enhancement.</span></a></h5>
-              <p class="dark-gray mb-24"><span style="color:rgb(5, 109, 150);">Airports continue to enhance passenger experiences with faster check-in processes, upgraded security screening technologies, and improved terminal facilities.</span></p>
-              <a href="blog-detail.html" class="cus-btn small-pad">Read More</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xxl-6 col-xl-4 col-lg-12 col-md-6 col-sm-6">
-      <div class="blog-box bg-skyblue light-shadow p-24 br-20">
-        <div class="row align-items-center row-gap-3">
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="image-box">
-              <a href="blog-detail.html"><img src="images\maps.jpg" alt=""></a>
-            </div>
-          </div>
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="content-box">
-              <div class="d-flex gap-16 mb-24">
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/user-bk.png" alt="">
-                  <p class=""><span style="color: blue">Malisa John</span></p>
-                </div>
-                <div class="vr-line"></div>
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/calender.png" alt="">
-                  <p class=""><span style="color: Black">08 Aug, 2023</span></p>
-                </div>
-              </div>
-              <h5 class="lightest-black mb-8"><a href="blog-detail.html"><span style="color: Black">Airline & Route Developments.</span></a></h5>
-              <p class="dark-gray mb-24"><span style="color:rgb(5, 109, 150);">Airports are welcoming new airline partnerships and expanding flight routes, offering travelers greater connectivity and more destination choices.</span></p>
-              <a href="blog-detail.html" class="cus-btn small-pad">Read More</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <div class="col-xxl-6 col-xl-4 col-lg-12 col-md-6 col-sm-6">
-      <div class="blog-box bg-skyblue light-shadow p-24 br-20">
-        <div class="row align-items-center row-gap-3">
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="image-box">
-              <a href="blog-detail.html"><img src="images/security.jpg" alt=""></a>
-            </div>
-          </div>
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="content-box">
-              <div class="d-flex gap-16 mb-24">
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/user-bk.png" alt="">
-                  <p class=""><span style="color: blue;">"Malisa John</span></p>
-                </div>
-                <div class="vr-line"></div>
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/calender.png" alt="">
-                  <p class=><span style="color: black;">,08 Aug, 2023</span></p>
-                </div>
-              </div>
-              <h5 class="lightest-black mb-8"><a href="blog-detail.html"><span style="color: Black">Advanced Security & Safety Measures.</span></a></h5>
-              <p class="dark-gray mb-24"><span style="color:rgb(5, 109, 150);">airports are implementing advanced surveillance systems, AI-powered security checks, and enhanced emergency response protocols.</sapn></p>
-              <a href="blog-detail.html" class="cus-btn small-pad">Read More</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-xxl-6 col-xl-4 col-lg-12 col-md-6 col-sm-6 d-xxl-block d-xl-none">
-      <div class="blog-box bg-skyblue light-shadow p-24 br-20">
-        <div class="row align-items-center row-gap-3">
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="image-box">
-              <a href="blog-detail.html"><img src="images\adventure.jpg" alt=""></a>
-            </div>
-          </div>
-          <div class="col-xxl-6 col-xl-12 col-lg-6">
-            <div class="content-box">
-              <div class="d-flex gap-16 mb-24">
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/user-bk.png" alt="">
-                  <p class=><span style="color: blue;">Malisa John</span></p>
-                </div>
-                <div class="vr-line"></div>
-                <div class="d-flex align-items-center gap-8">
-                  <img src="assets/media/icons/calender.png" alt="">
-                  <p class=><span style="color: black;">,08 Aug, 2023</span></p>
-                  <p class="h6 dark-gray"></p>
-                </div>
-              </div>
-              <h5 class="lightest-black mb-8"><a href="blog-detail.html"><span style="color: Black">Wings of Adventure: Exploring the World by
-              Air.</span></a></h5>
-              <p class="dark-gray mb-24"><span style="color:rgb(5, 109, 150);">Lorem ipsum dolor sit amet consectetur. Feugiat sit eleifend tortor.</p></span>
-              <a href="blog-detail.html" class="cus-btn small-pad">Read More</a>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-<br><br><br>
-<!-- ==================footer -->
-
-<footer class="footer">
-  <div class="container">
-    <div class="footer-grid">
-
-      <!-- Logo & Subscribe -->
-      <div class="footer-col">
-        <div class="footer-logo">
-        <span class="logo-circle me-2">✈</span>
-          <img src="logo.svg" alt="">
-          <span>Sky Port</span>
-          
-          
-        </div>
-        <p class="footer-text">
-          Lorem ipsum dolor sit amet consectetur. Aliquet vulputate augue penatibus in libero et id aliquam.
-          In ridiculus pretium est velit euismod.
-        </p>
-
-        <h6 class="footer-title">Subscribe to our special offers</h6>
-        <form class="subscribe-box">
-          <input type="email" placeholder="Email address">
-          <button type="submit">Subscribe</button>
-        </form>
-      </div>
-
-      <!-- Booking -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Booking</h5>
-        <ul>
-          <li><a href="#">Book Flights</a></li>
-          <li><a href="#">Travel Services</a></li>
-          <li><a href="#">Transportation</a></li>
-          <li><a href="#">Planning Your Trip</a></li>
-        </ul>
-      </div>
-
-      <!-- Useful Links -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Useful Links</h5>
-        <ul>
-          <li><a href="index.php">Home</a></li>
-          <li><a href="#">Blogs</a></li>
-          <li><a href="#">About</a></li>
-          <li><a href="#">Contact Us</a></li>
-        </ul>
-      </div>
-
-      <!-- Manage -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Manage</h5>
-        <ul>
-          <li><a href="#">Check-in</a></li>
-          <li><a href="#">Manage Your Booking</a></li>
-          <li><a href="#">Chauffeur Drive</a></li>
-          <li><a href="#">Flight Status</a></li>
-        </ul>
-      </div>
-
-      <!-- Contact -->
-      <div class="footer-col">
-        <h5 class="footer-heading">Contact Us</h5>
-        <ul class="contact-list">
-          <li>📍 123 Main Street, Anytown, USA.</li>
-          <li>📞 <a href="tel:+1234567890">+1 234 567 890</a></li>
-          <li>✉️ <a href="mailto:email@example.com">email@example.com</a></li>
-        </ul>
-
-        <h6 class="footer-title">Follow Us!</h6>
-        <div class="social-icons">
-          <a href="#">in</a>
-          <a href="#">f</a>
-          <a href="#">ig</a>
-          <a href="#">x</a>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="footer-bottom">
-      ©2025 FlyNow All Rights Reserved.
-    </div>
-  </div>
-</footer>
-
-
-
-    <!-- Bootstrap JS -->
-
-     
-   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
-    <!-- Carousel controls linking to custom prev/next buttons -->
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="index.js"></script>
-</body>
-</html>
+<?php include 'include/footer.php'; ?>
