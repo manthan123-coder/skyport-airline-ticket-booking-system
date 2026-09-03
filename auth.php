@@ -4,19 +4,7 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 
 function users_file(): string {
-    $primary = __DIR__ . '/data/users.json';
-    if (is_writable($primary) || (!file_exists($primary) && is_writable(__DIR__ . '/data'))) {
-        return $primary;
-    }
-    $tmp_dir = sys_get_temp_dir() . '/skyport_data';
-    if (!is_dir($tmp_dir)) {
-        @mkdir($tmp_dir, 0777, true);
-    }
-    $tmp_file = $tmp_dir . '/users.json';
-    if (!file_exists($tmp_file) && file_exists($primary)) {
-        @copy($primary, $tmp_file);
-    }
-    return file_exists($tmp_file) ? $tmp_file : $primary;
+    return __DIR__ . '/data/users.json';
 }
 
 function all_users(): array {
@@ -27,10 +15,9 @@ function all_users(): array {
 }
 
 function save_users(array $users): void {
-    $file = users_file();
-    $directory = dirname($file);
-    if (!is_dir($directory)) @mkdir($directory, 0775, true);
-    @file_put_contents($file, json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
+    $directory = dirname(users_file());
+    if (!is_dir($directory)) mkdir($directory, 0775, true);
+    file_put_contents(users_file(), json_encode($users, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES), LOCK_EX);
 }
 
 function find_user(string $email): ?array {
